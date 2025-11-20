@@ -19,6 +19,7 @@ import {
   Grid,
   Select,
   Spin,
+  Tabs,
 } from "antd";
 import {
   MenuOutlined,
@@ -42,10 +43,12 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { useLocation } from "react-router-dom";
+import AuthTabsModal from "./AuthTabsModal";
 
 const { useBreakpoint } = Grid;
 const { Option } = Select;
 
+const { TabPane } = Tabs;
 const Navbar = () => {
   const location = useLocation();
   const auth = getAuth(app);
@@ -98,13 +101,16 @@ const Navbar = () => {
     setLoading(true);
     try {
       const res = await signInWithPopup(auth, provider);
-      const u = res.user;
+      
+      const u = res['_tokenResponse'];
+      console.log("res",u);
       // build minimal user object from firebase auth result
       const userObj = {
-        uid: u.uid,
-        displayName: u.displayName || null,
+        
         email: u.email || null,
         photoURL: u.photoURL || null,
+        firstName: u.firstName || null,
+        lastName: u.lastName || null,
         // other profile fields will be added after complete-profile
       };
       // Save basic auth info temporarily
@@ -389,17 +395,10 @@ const Navbar = () => {
                   <>
                     <Col>
                       <Button onClick={() => openAuthModal("signin")}>
-                        Sign In
+                      Sign In 
                       </Button>
                     </Col>
-                    <Col>
-                      <Button
-                        type="primary"
-                        onClick={() => openAuthModal("signup")}
-                      >
-                        Sign Up
-                      </Button>
-                    </Col>
+                    
                   </>
                 ) : (
                   <Col>
@@ -499,107 +498,17 @@ const Navbar = () => {
           )}
         </div>
       </Drawer>
+<AuthTabsModal
+  visible={authModalOpen}
+  onClose={closeAuthModal}
+  loading={loading}
+  handleGoogleSignIn={handleGoogleSignIn}
+  handleEmailSignin={handleEmailSignin}
+  handleEmailSignup={handleEmailSignup}
+/>
+   
 
-      {/* AUTH Modal: only Google or Email+Password+Confirm */}
-      <Modal
-        title={authMode === "signin" ? "Sign In" : "Sign Up"}
-        open={authModalOpen}
-        onCancel={closeAuthModal}
-        footer={null}
-        destroyOnClose
-      >
-        <div style={{ marginBottom: 12 }}>
-          <Button
-            block
-            icon={<GoogleOutlined />}
-            onClick={handleGoogleSignIn}
-            loading={loading}
-          >
-            Continue with Google
-          </Button>
-        </div>
 
-        <Divider>Or use email</Divider>
-
-        {authMode === "signup" ? (
-          <Form layout="vertical" onFinish={handleEmailSignup}>
-            <Form.Item
-              name="email"
-              label="Email"
-              rules={[{ required: true, type: "email" }]}
-            >
-              <Input />
-            </Form.Item>
-            <Form.Item
-              name="password"
-              label="Password"
-              rules={[{ required: true, min: 6 }]}
-            >
-              <Input.Password />
-            </Form.Item>
-            <Form.Item
-              name="confirmPassword"
-              label="Confirm Password"
-              dependencies={["password"]}
-              rules={[
-                { required: true, message: "Confirm password" },
-                ({ getFieldValue }) => ({
-                  validator(_, value) {
-                    if (!value || getFieldValue("password") === value)
-                      return Promise.resolve();
-                    return Promise.reject(new Error("Passwords do not match"));
-                  },
-                }),
-              ]}
-            >
-              <Input.Password />
-            </Form.Item>
-
-            <Form.Item>
-              <Button type="primary" htmlType="submit" loading={loading} block>
-                Create account
-              </Button>
-            </Form.Item>
-
-            <div style={{ textAlign: "center" }}>
-              Already have an account?{" "}
-              <Button type="link" onClick={() => setAuthMode("signin")}>
-                Sign in
-              </Button>
-            </div>
-          </Form>
-        ) : (
-          <Form layout="vertical" onFinish={handleEmailSignin}>
-            <Form.Item
-              name="email"
-              label="Email"
-              rules={[{ required: true, message: "Enter email" }]}
-            >
-              <Input />
-            </Form.Item>
-            <Form.Item
-              name="password"
-              label="Password"
-              rules={[{ required: true, message: "Enter password" }]}
-            >
-              <Input.Password />
-            </Form.Item>
-
-            <Form.Item>
-              <Button type="primary" htmlType="submit" loading={loading} block>
-                Sign in
-              </Button>
-            </Form.Item>
-
-            <div style={{ textAlign: "center" }}>
-              No account?{" "}
-              <Button type="link" onClick={() => setAuthMode("signup")}>
-                Create one
-              </Button>
-            </div>
-          </Form>
-        )}
-      </Modal>
 
       {/* Profile Completion Modal (after auth) */}
       <Modal
@@ -625,7 +534,7 @@ const Navbar = () => {
             label="First name"
             rules={[{ required: true, message: "Enter first name" }]}
           >
-            <Input />
+            <Input value={user?.firstName||""}/>
           </Form.Item>
 
           <Form.Item
@@ -633,7 +542,7 @@ const Navbar = () => {
             label="Last name"
             rules={[{ required: true, message: "Enter last name" }]}
           >
-            <Input />
+            <Input value={user?.lastName||""} />
           </Form.Item>
 
           <Form.Item name="phone" label="Phone">
