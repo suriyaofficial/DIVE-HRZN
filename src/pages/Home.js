@@ -1,12 +1,13 @@
-import React from 'react'
-
+import React from "react";
+import CarouselBanner from "../components/CarouselBanner";
 function Home() {
+  
   return (
-    <div>
-      <h1>Welcome to the Home Page</h1>
-      <p>This is the main landing page of the application.</p>
-    </div>
-  )
+
+    <div style={{ height: "90vh", margin: "0" }}>
+      <CarouselBanner />
+    </div>    
+  );
 }
 
-export default Home
+export default Home;
