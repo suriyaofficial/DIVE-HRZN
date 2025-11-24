@@ -9,6 +9,7 @@ import Scuba from "./pages/Scuba";
 import Footer from "./components/Footer";
 import Skydive from "./pages/Skydive";
 import About from "./pages/About";
+import Detail from "./pages/Detail";
 function App() {
 const queryClient = new QueryClient();
 
@@ -20,7 +21,7 @@ const queryClient = new QueryClient();
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/scuba" element={<Scuba />} />
-              <Route path="/scuba/::{sku}" element={<Scuba />} />
+              <Route path="/scuba/:sku" element={<Detail />} />
               <Route path="/skydive" element={<Skydive />} />
               <Route path="/about" element={<About />} />
               {/* <Route path="/contact" element={<Scuba />} /> */}

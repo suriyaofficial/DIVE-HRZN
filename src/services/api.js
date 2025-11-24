@@ -10,6 +10,15 @@ export async function getScuba() {
     return response.data;
   } catch (err) {}
 }
+export async function getDetail(sku) {
+  const requestUrl = `${BASE_URL}/scuba/${sku}`;
+  try {
+    console.log("requestUrl",requestUrl);
+    const response = await axios.get(requestUrl);
+    console.log("api response",response.data);
+    return response.data;
+  } catch (err) {}
+}
 
 export async function getInvites(wandererId) {
   const requestUrl = `${BASE_URL}/wander/inivitation?wandererId=${wandererId}`;
