@@ -20,6 +20,7 @@ const queryClient = new QueryClient();
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/scuba" element={<Scuba />} />
+              <Route path="/scuba/::{sku}" element={<Scuba />} />
               <Route path="/skydive" element={<Skydive />} />
               <Route path="/about" element={<About />} />
               {/* <Route path="/contact" element={<Scuba />} /> */}

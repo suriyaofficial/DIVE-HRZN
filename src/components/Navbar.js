@@ -7,7 +7,6 @@ import {
   Button,
   Drawer,
   Divider,
-  Tag,
   Modal,
   Form,
   Input,
@@ -18,7 +17,6 @@ import {
   Space,
   Grid,
   Select,
-  Spin,
   Tabs,
 } from "antd";
 import {
@@ -26,11 +24,7 @@ import {
   LogoutOutlined,
   UserOutlined,
   GoogleOutlined,
-  HomeOutlined,
-  CompassOutlined,
-  RocketOutlined,
-  InfoCircleOutlined,
-  PhoneOutlined,
+  
 } from "@ant-design/icons";
 
 import {
@@ -46,9 +40,7 @@ import { useLocation } from "react-router-dom";
 import AuthTabsModal from "./AuthTabsModal";
 
 const { useBreakpoint } = Grid;
-const { Option } = Select;
 
-const { TabPane } = Tabs;
 const Navbar = () => {
   const location = useLocation();
   const auth = getAuth(app);
@@ -74,11 +66,7 @@ const Navbar = () => {
 
   // Country/State/City data and loading flags
   const [countries, setCountries] = useState([]);
-  const [states, setStates] = useState([]);
-  const [cities, setCities] = useState([]);
-  const [countryLoading, setCountryLoading] = useState(false);
-  const [stateLoading, setStateLoading] = useState(false);
-  const [cityLoading, setCityLoading] = useState(false);
+  
 
   useEffect(() => {
     // Optionally we could check firebase onAuthStateChanged
@@ -196,7 +184,6 @@ const Navbar = () => {
   // PROFILE COMPLETION: fetching country/state/city lists
   // --------------------
   const fetchCountries = async () => {
-    setCountryLoading(true);
     try {
       // REST Countries API (public)
       const res = await fetch("https://restcountries.com/v3.1/all");
@@ -214,56 +201,10 @@ const Navbar = () => {
       console.error("countries fetch", err);
       message.error("Failed to load countries");
     } finally {
-      setCountryLoading(false);
     }
   };
 
-  // For states and cities we use "countriesnow.space" public endpoints (POST)
-  const fetchStatesForCountry = async (countryName) => {
-    if (!countryName) return setStates([]);
-    setStateLoading(true);
-    try {
-      const res = await fetch(
-        "https://countriesnow.space/api/v0.1/countries/states",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ country: countryName }),
-        }
-      );
-      const json = await res.json();
-      const list = (json?.data?.states || []).map((s) => s.name).sort();
-      setStates(list);
-    } catch (err) {
-      console.error("states fetch", err);
-      message.error("Failed to load states");
-    } finally {
-      setStateLoading(false);
-    }
-  };
-
-  const fetchCitiesForState = async (countryName, stateName) => {
-    if (!countryName || !stateName) return setCities([]);
-    setCityLoading(true);
-    try {
-      const res = await fetch(
-        "https://countriesnow.space/api/v0.1/countries/state/cities",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ country: countryName, state: stateName }),
-        }
-      );
-      const json = await res.json();
-      const list = (json?.data || []).sort();
-      setCities(list);
-    } catch (err) {
-      console.error("cities fetch", err);
-      message.error("Failed to load cities");
-    } finally {
-      setCityLoading(false);
-    }
-  };
+  
 
   // Called when profile modal opens — ensure we have country list
   useEffect(() => {
@@ -549,104 +490,6 @@ const Navbar = () => {
             <Input />
           </Form.Item>
 
-          <Form.Item
-            name="country"
-            label="Country"
-            rules={[{ required: true, message: "Select country" }]}
-          >
-            {countryLoading ? (
-              <Spin />
-            ) : (
-              <Select
-                showSearch
-                placeholder="Select country"
-                optionFilterProp="children"
-                onChange={(val) => {
-                  // when country changes, load states for that country
-                  fetchStatesForCountry(val);
-                  // clear cities
-                  setCities([]);
-                }}
-                filterOption={(input, option) =>
-                  option.children.toLowerCase().indexOf(input.toLowerCase()) >=
-                  0
-                }
-              >
-                {countries.map((c) => (
-                  <Option key={c.name} value={c.name}>
-                    {c.name}
-                  </Option>
-                ))}
-              </Select>
-            )}
-          </Form.Item>
-
-          <Form.Item
-            name="state"
-            label="State"
-            rules={[{ required: true, message: "Select state" }]}
-          >
-            {stateLoading ? (
-              <Spin />
-            ) : (
-              <Select
-                showSearch
-                placeholder="Select state"
-                onChange={(val, opt) => {
-                  // fetch cities for selected state + country
-                  const country =
-                    document.querySelector('[name="country"] input')?.value ||
-                    null;
-                  // better to track selected country via form but to keep simple we read form value below
-                }}
-                optionFilterProp="children"
-                filterOption={(input, option) =>
-                  option.children.toLowerCase().indexOf(input.toLowerCase()) >=
-                  0
-                }
-                onFocus={() => {
-                  // no-op - states are loaded when country changes
-                }}
-              >
-                {states.map((s) => (
-                  <Option key={s} value={s}>
-                    {s}
-                  </Option>
-                ))}
-              </Select>
-            )}
-          </Form.Item>
-
-          <Form.Item
-            name="city"
-            label="City"
-            rules={[{ required: true, message: "Select city" }]}
-          >
-            {cityLoading ? (
-              <Spin />
-            ) : (
-              <Select
-                showSearch
-                placeholder="Select city"
-                optionFilterProp="children"
-                filterOption={(input, option) =>
-                  option.children.toLowerCase().indexOf(input.toLowerCase()) >=
-                  0
-                }
-                onFocus={async () => {
-                  // When user focuses city select, fetch cities if not yet loaded
-                  const form = document.querySelector("form");
-                  // Instead of DOM hack, get form values via native form, but better to use Form.useForm()
-                }}
-              >
-                {cities.map((c) => (
-                  <Option key={c} value={c}>
-                    {c}
-                  </Option>
-                ))}
-              </Select>
-            )}
-          </Form.Item>
 
           <Form.Item>
             <Button

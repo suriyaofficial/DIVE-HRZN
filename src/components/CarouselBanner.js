@@ -1,8 +1,4 @@
-import React, { useRef } from "react";
-import { Carousel, Button } from "antd";
-import { LeftOutlined, RightOutlined } from "@ant-design/icons";
-// import "antd/dist/antd.css"; // for antd v4
-// import "antd/dist/reset.css"; // for antd v5
+import { Carousel } from "antd";
 
 const images = [
   // replace with local imports like: import b1 from "../assets/banner1.jpg"
