@@ -206,16 +206,6 @@ const Navbar = () => {
 
   
 
-  // Called when profile modal opens — ensure we have country list
-  useEffect(() => {
-    if (profileModalOpen && countries.length === 0) {
-      fetchCountries();
-    }
-  }, [profileModalOpen]);
-
-  // --------------------
-  // Save profile data
-  // --------------------
   const onCompleteProfile = async (values) => {
     setProfileLoading(true);
     try {
@@ -277,7 +267,7 @@ const Navbar = () => {
   const navItems = [
     { label: "Home", action: () => navigate("/") },
     { label: "Scuba", action: () => navigate("/scuba") },
-    { label: "Skydive", action: () => navigate("/skydive") },
+    { label: "Skydive", action: () => navigate("/skydive"), disabled: true },
     { label: "About", action: () => navigate("/about") },
   ];
 
@@ -326,7 +316,7 @@ const Navbar = () => {
               <Row align="middle" gutter={16}>
                 {navItems.map((it) => (
                   <Col key={it.label}>
-                    <Button type="text" onClick={it.action}>
+                    <Button type="text" disabled={it.disabled} onClick={it.action}>
                       {it.label}
                     </Button>
                   </Col>
@@ -386,22 +376,19 @@ const Navbar = () => {
             items={[
               {
                 key: "/",
-                // icon: <HomeOutlined />,
                 label: "Home",
               },
               {
                 key: "/scuba",
-                // icon: <CompassOutlined />,
                 label: "Scuba",
               },
               {
                 key: "/skydive",
-                // icon: <RocketOutlined />,
+                disabled: true,
                 label: "Skydive",
               },
               {
                 key: "/about",
-                // icon: <InfoCircleOutlined />,
                 label: "About",
               },
             ]}
