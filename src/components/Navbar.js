@@ -26,18 +26,17 @@ import {
   GoogleOutlined,
   
 } from "@ant-design/icons";
-
-import {
+import{
   getAuth,
   signOut,
   signInWithPopup,
   GoogleAuthProvider,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
   updateProfile,
 } from "firebase/auth";
 import { useLocation } from "react-router-dom";
 import AuthTabsModal from "./AuthTabsModal";
+import { useMutation } from "@tanstack/react-query";
+import { loginWithGoogle } from "../services/api";
 
 const { useBreakpoint } = Grid;
 
@@ -50,7 +49,6 @@ const Navbar = () => {
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState("signin"); // "signin" or "signup"
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(() => {
     try {
@@ -58,111 +56,62 @@ const Navbar = () => {
     } catch {
       return null;
     }
-  });
+  })
 
-  // Profile completion modal (shown after auth if profile incomplete)
-  const [profileModalOpen, setProfileModalOpen] = useState(false);
-  const [profileLoading, setProfileLoading] = useState(false);
-
-  // Country/State/City data and loading flags
-  const [countries, setCountries] = useState([]);
-  
-
-  useEffect(() => {
-    // Optionally we could check firebase onAuthStateChanged
-  }, []);
 
   const openDrawer = () => setDrawerOpen(true);
   const closeDrawer = () => setDrawerOpen(false);
 
   const openAuthModal = (mode = "signin") => {
     closeDrawer();
-    setAuthMode(mode);
     setAuthModalOpen(true);
   };
   const closeAuthModal = () => setAuthModalOpen(false);
 
-  // --------------------
-  // AUTH FLOW
-  // --------------------
+
+  const loginMutation = useMutation({
+    mutationFn: loginWithGoogle,
+    onSuccess: (data) => {
+      const userData = data.user || data; 
+        completeLogin(userData);
+    },
+    onError: (error) => {
+      console.error("Login failed", error);
+      message.error("Login failed: " + (error.response?.data?.message || error.message));
+      setLoading(false);
+    },
+  });
+
+
+  const completeLogin = (userData) => {
+    localStorage.setItem("user", JSON.stringify(userData));
+    setUser(userData);
+    message.success("Successfully signed in!");
+    closeAuthModal();
+    setLoading(false);
+  };
+
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
       const res = await signInWithPopup(auth, provider);
-      
-      const u = res['_tokenResponse'];
-      console.log("res",u);
-      // build minimal user object from firebase auth result
-      const userObj = {
-        
-        email: u.email || null,
-        photoURL: u.photoURL || null,
-        firstName: u.firstName || null,
-        lastName: u.lastName || null,
-        // other profile fields will be added after complete-profile
-      };
-      // Save basic auth info temporarily
-      localStorage.setItem("user", JSON.stringify(userObj));
-      setUser(userObj);
+      const u = res.user; // Firebase user
+      const names = u.displayName ? u.displayName.split(" ") : ["", ""];
+      const firstName = names[0];
+      const lastName = names.slice(1).join(" ") || "";
 
-      // open profile completion modal (if additional fields not present)
-      setTimeout(() => setProfileModalOpen(true), 200);
-      closeAuthModal();
-      message.success("Signed in with Google — please complete profile");
+      const payload = {
+        email: u.email,
+        firstName: firstName,
+        lastName: lastName,
+        profileImage: u.profileImage,
+      };
+
+      loginMutation.mutate(payload);
+
     } catch (err) {
       console.error(err);
       message.error(err.message || "Google sign-in failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // EMAIL SIGNUP (only email/password + confirm password in modal)
-  const handleEmailSignup = async (values) => {
-    const { email, password } = values;
-    setLoading(true);
-    try {
-      const res = await createUserWithEmailAndPassword(auth, email, password);
-      // update display name later in profile completion
-      const userObj = {
-        uid: res.user.uid,
-        email: res.user.email,
-      };
-      localStorage.setItem("user", JSON.stringify(userObj));
-      setUser(userObj);
-      setAuthModalOpen(false);
-      setTimeout(() => setProfileModalOpen(true), 200);
-      message.success("Account created — please complete profile");
-    } catch (err) {
-      console.error(err);
-      message.error(err.message || "Signup failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // EMAIL SIGNIN (if user already has account)
-  const handleEmailSignin = async (values) => {
-    const { email, password } = values;
-    setLoading(true);
-    try {
-      const res = await signInWithEmailAndPassword(auth, email, password);
-      const userObj = {
-        uid: res.user.uid,
-        displayName: res.user.displayName || null,
-        email: res.user.email,
-        photoURL: res.user.photoURL || null,
-      };
-      localStorage.setItem("user", JSON.stringify(userObj));
-      setUser(userObj);
-      setAuthModalOpen(false);
-      // If profile data is incomplete, open profile modal
-      setTimeout(() => setProfileModalOpen(true), 200);
-      message.success("Signed in — complete profile if needed");
-    } catch (err) {
-      console.error(err);
-      message.error(err.message || "Signin failed");
-    } finally {
       setLoading(false);
     }
   };
@@ -179,75 +128,6 @@ const Navbar = () => {
     navigate("/");
     window.location.reload();
   };
-
-  // --------------------
-  // PROFILE COMPLETION: fetching country/state/city lists
-  // --------------------
-  const fetchCountries = async () => {
-    try {
-      // REST Countries API (public)
-      const res = await fetch("https://restcountries.com/v3.1/all");
-      const data = await res.json();
-      // map to { name, code } and sort
-      const list = data
-        .map((c) => ({
-          name: c.name?.common,
-          code: c.cca2 || c.ccn3 || c.cca3 || c.name?.common,
-        }))
-        .filter(Boolean)
-        .sort((a, b) => a.name.localeCompare(b.name));
-      setCountries(list);
-    } catch (err) {
-      console.error("countries fetch", err);
-      message.error("Failed to load countries");
-    } finally {
-    }
-  };
-
-  
-
-  const onCompleteProfile = async (values) => {
-    setProfileLoading(true);
-    try {
-      // Merge with existing user object from localStorage
-      const existing = JSON.parse(localStorage.getItem("user")) || {};
-      const merged = {
-        ...existing,
-        firstName: values.firstName,
-        lastName: values.lastName,
-        phone: values.phone,
-        country: values.country,
-        state: values.state,
-        city: values.city,
-        displayName: `${values.firstName} ${values.lastName}`.trim(),
-      };
-
-      // update firebase profile displayName if firebase user exists
-      try {
-        const currentUser = auth.currentUser;
-        if (currentUser && merged.displayName) {
-          await updateProfile(currentUser, { displayName: merged.displayName });
-        }
-      } catch (e) {
-        console.warn("Could not update firebase profile", e);
-      }
-
-      // store final user object locally (you can also persist to firestore)
-      localStorage.setItem("user", JSON.stringify(merged));
-      setUser(merged);
-      setProfileModalOpen(false);
-      message.success("Profile saved");
-    } catch (err) {
-      console.error(err);
-      message.error("Failed to save profile");
-    } finally {
-      setProfileLoading(false);
-    }
-  };
-
-  // --------------------
-  // UI helpers & nav
-  // --------------------
   const goto = (path) => {
     navigate(path);
     closeDrawer();
@@ -337,8 +217,7 @@ const Navbar = () => {
                       <Button>
                         <Space>
                           <Avatar
-                            src={user.photoURL}
-                            icon={!user.photoURL && <UserOutlined />}
+                            src={user.profileImage}
                           />
                           {user.displayName || user.email}
                         </Space>
@@ -431,65 +310,7 @@ const Navbar = () => {
   onClose={closeAuthModal}
   loading={loading}
   handleGoogleSignIn={handleGoogleSignIn}
-  handleEmailSignin={handleEmailSignin}
-  handleEmailSignup={handleEmailSignup}
 />
-   
-
-
-
-      {/* Profile Completion Modal (after auth) */}
-      <Modal
-        title="Complete your profile"
-        open={profileModalOpen}
-        onCancel={() => setProfileModalOpen(false)}
-        footer={null}
-        destroyOnClose
-      >
-        <Form
-          layout="vertical"
-          onFinish={onCompleteProfile}
-          initialValues={{
-            email: user?.email || "",
-          }}
-        >
-          <Form.Item label="Email (from authentication)">
-            <Input value={user?.email || ""} disabled />
-          </Form.Item>
-
-          <Form.Item
-            name="firstName"
-            label="First name"
-            rules={[{ required: true, message: "Enter first name" }]}
-          >
-            <Input value={user?.firstName||""}/>
-          </Form.Item>
-
-          <Form.Item
-            name="lastName"
-            label="Last name"
-            rules={[{ required: true, message: "Enter last name" }]}
-          >
-            <Input value={user?.lastName||""} />
-          </Form.Item>
-
-          <Form.Item name="phone" label="Phone">
-            <Input />
-          </Form.Item>
-
-
-          <Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={profileLoading}
-              block
-            >
-              Save profile
-            </Button>
-          </Form.Item>
-        </Form>
-      </Modal>
     </>
   );
 };

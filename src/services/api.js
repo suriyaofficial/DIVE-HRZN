@@ -4,42 +4,58 @@ import { BASE_URL } from "../common.ts";
 export async function getScuba() {
   const requestUrl = `${BASE_URL}/scuba`;
   try {
-    console.log("requestUrl",requestUrl);
+    console.log("requestUrl", requestUrl);
     const response = await axios.get(requestUrl);
-    console.log("api response",response.data);
+    console.log("api response", response.data);
     return response.data;
   } catch (err) {}
 }
 export async function getDetail(sku) {
   const requestUrl = `${BASE_URL}/scuba/${sku}`;
   try {
-    console.log("requestUrl",requestUrl);
+    console.log("requestUrl", requestUrl);
     const response = await axios.get(requestUrl);
-    console.log("api response",response.data);
+    console.log("api response", response.data);
     return response.data;
   } catch (err) {}
 }
-export async function postQuote( body) {
-  console.log("body",body);
-  
+export async function postQuote(body) {
+  console.log("body", body);
+
   const requestUrl = `${BASE_URL}/scuba/booking/request?type=quote`;
   try {
-    
     const response = axios.post(requestUrl, body);
     return response;
   } catch (err) {}
 }
-export async function postReserve( body) {
-  console.log("body",body);
-  
+export async function postReserve(body) {
+  console.log("body", body);
+
   const requestUrl = `${BASE_URL}/scuba/booking/request?type=reserve`;
   try {
-    
     const response = axios.post(requestUrl, body);
     return response;
   } catch (err) {}
 }
+export const loginWithGoogle = async (userData) => {
+  try {
+    let requestUrl = `${BASE_URL}/auth/google-login`;
+    // userData: { email, firstName, lastName, photoURL }
+    const response = await axios.post(requestUrl, userData);
+    return response.data;
+  } catch (err) {}
+};
 
+export const updatePhoneNumber = async (data) => {
+  try {
+    console.log("data", data);
+
+    let requestUrl = `${BASE_URL}/auth/update-phone`;
+    // data: { email, phone }
+    const response = await axios.post(requestUrl, data);
+    return response.data;
+  } catch (err) {}
+};
 export async function getInvites(wandererId) {
   const requestUrl = `${BASE_URL}/wander/inivitation?wandererId=${wandererId}`;
   try {
@@ -63,13 +79,10 @@ export async function getActiveWander(wandererId) {
 export async function apiAcceptInvite(wandererId, body) {
   const requestUrl = `${BASE_URL}/accept/wander/inivitation?wanderer_id=${wandererId}`;
   try {
-    
     const response = axios.put(requestUrl, body);
     return response;
   } catch (err) {}
 }
-
-
 
 export async function getWander(wanderId) {
   const requestUrl = `${BASE_URL}/wander?wanderId=${wanderId}`;
@@ -85,7 +98,6 @@ export async function getWander(wanderId) {
 export async function addExpenses(wanderId, payload) {
   const requestUrl = `${BASE_URL}/add/expense?wander_id=${wanderId}`;
   try {
-    
     const response = axios.post(requestUrl, payload);
     return response;
   } catch (err) {}

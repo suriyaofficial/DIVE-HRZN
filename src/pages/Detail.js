@@ -35,6 +35,13 @@ export default function Detail() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedAction, setSelectedAction] = useState(null);
   const [openCards, setOpenCards] = useState(true);
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user")) || null;
+    } catch {
+      return null;
+    }
+  });
   const tagProps = {
     available: { color: "green", text: "Available" },
     "coming soon": { color: "orange", text: "Coming soon" },
@@ -53,7 +60,7 @@ export default function Detail() {
 
   const quoteMutation = useMutation({
     mutationFn: (payload) => postQuote(payload),
-        onSuccess: () => {
+    onSuccess: () => {
       message.success("Quote request sent! We will contact you soon.");
       queryClient.invalidateQueries(["detail", sku]);
       setModalOpen(false);
@@ -87,8 +94,10 @@ export default function Detail() {
     const payload = {
       sku,
       title: data?.title,
-      contact: values?.contact || "anonymous",
-      email: values?.contact || "anonymous email",
+      phoneNo: user?.phoneNo,
+      email: user?.email,
+      name: `${user?.firstName} ${user?.lastName}`,
+      initiatedDate: new Date().toISOString().split("T")[0],
     };
 
     if (selectedAction === "quote") {
@@ -372,7 +381,7 @@ export default function Detail() {
         }
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
-        onOk={() => handleConfirm({ contact: "website-user" })}
+        onOk={() => handleConfirm()}
         okText={
           selectedAction === "quote"
             ? "Send Quote Request"

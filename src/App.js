@@ -10,30 +10,37 @@ import Footer from "./components/Footer";
 import Skydive from "./pages/Skydive";
 import About from "./pages/About";
 import Detail from "./pages/Detail";
+import Profile from "./pages/Profile";
+import EnquiryDashboard from "./pages/EnquiryDashboard";
 function App() {
-const queryClient = new QueryClient();
+  const queryClient = new QueryClient();
 
   return (
     <>
       <QueryClientProvider client={queryClient}>
-          <Router>
-            <Navbar />
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/scuba" element={<Scuba />} />
-              <Route path="/scuba/:sku" element={<Detail />} />
-              <Route path="/skydive" element={<Skydive />} />
-              <Route path="/about" element={<About />} />
-              {/* <Route path="/contact" element={<Scuba />} /> */}
-              {/* <Route path="/wander" element={<ActiveWander />} />
+        <Router>
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/scuba" element={<Scuba />} />
+            <Route path="/scuba/:sku" element={<Detail />} />
+            <Route path="/skydive" element={<Skydive />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route
+              path="/admin/enquiry/dashboard"
+              element={<EnquiryDashboard />}
+            />
+            {/* <Route path="/contact" element={<Scuba />} /> */}
+            {/* <Route path="/wander" element={<ActiveWander />} />
               <Route path="/wander/active/wander" element={<ActiveWander />} />
               <Route path="/wander/invite" element={<Invite />} />
               <Route path="/wander/reports" element={<Reports />} />
               <Route path="/wander/reports/view" element={<ReportsView />} /> */}
-            </Routes>
-          </Router>
-          {/* <Login /> */}
-          <Footer />
+          </Routes>
+        </Router>
+        {/* <Login /> */}
+        <Footer />
       </QueryClientProvider>
     </>
   );
