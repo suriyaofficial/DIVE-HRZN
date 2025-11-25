@@ -56,6 +56,12 @@ export const updatePhoneNumber = async (data) => {
     return response.data;
   } catch (err) {}
 };
+
+export const getallENQ = async (queryString = "") => {
+  const res = await axios.get(`${BASE_URL}/scuba/enquiries/all${queryString}`);
+  console.log("res in api", res);
+  return res.data;
+};
 export async function getInvites(wandererId) {
   const requestUrl = `${BASE_URL}/wander/inivitation?wandererId=${wandererId}`;
   try {
