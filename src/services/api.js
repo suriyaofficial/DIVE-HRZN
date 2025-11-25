@@ -19,6 +19,26 @@ export async function getDetail(sku) {
     return response.data;
   } catch (err) {}
 }
+export async function postQuote( body) {
+  console.log("body",body);
+  
+  const requestUrl = `${BASE_URL}/scuba/booking/request?type=quote`;
+  try {
+    
+    const response = axios.post(requestUrl, body);
+    return response;
+  } catch (err) {}
+}
+export async function postReserve( body) {
+  console.log("body",body);
+  
+  const requestUrl = `${BASE_URL}/scuba/booking/request?type=reserve`;
+  try {
+    
+    const response = axios.post(requestUrl, body);
+    return response;
+  } catch (err) {}
+}
 
 export async function getInvites(wandererId) {
   const requestUrl = `${BASE_URL}/wander/inivitation?wandererId=${wandererId}`;
@@ -49,14 +69,7 @@ export async function apiAcceptInvite(wandererId, body) {
   } catch (err) {}
 }
 
-export async function CreateWanderApi(wandererId, body) {
-  const requestUrl = `${BASE_URL}/create/wander?wanderer_id=${wandererId}`;
-  try {
-    
-    const response = axios.post(requestUrl, body);
-    return response;
-  } catch (err) {}
-}
+
 
 export async function getWander(wanderId) {
   const requestUrl = `${BASE_URL}/wander?wanderId=${wanderId}`;
