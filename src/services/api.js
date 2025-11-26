@@ -62,6 +62,13 @@ export const getallENQ = async (queryString = "") => {
   console.log("res in api", res);
   return res.data;
 };
+export const updateEnquiry = async (enqId, updates) => {
+  const res = await axios.post(`${BASE_URL}/scuba/enquiries/update`, {
+    enqId,
+    ...updates,
+  });
+  return res.data;
+};
 export async function getInvites(wandererId) {
   const requestUrl = `${BASE_URL}/wander/inivitation?wandererId=${wandererId}`;
   try {
