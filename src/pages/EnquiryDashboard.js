@@ -18,7 +18,6 @@ import {
   WhatsAppOutlined,
   LinkOutlined,
   SaveOutlined,
-  UsergroupAddOutlined
 } from "@ant-design/icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -76,21 +75,21 @@ const normalizeEnquiries = (enquiries = []) =>
 
 // Status colors
 const STATUS_COLORS = {
-  "Created": "default",
-  "Assigned": "blue",
-  "Discussed": "cyan",
+  Created: "default",
+  Assigned: "blue",
+  Discussed: "cyan",
   "Quote Sent": "orange",
-  "Invoiced": "purple",
+  Invoiced: "purple",
   "Service Provided": "green",
   "Service Canceled": "red",
 };
 
 const PAYMENT_COLORS = {
   "Payment Pending": "orange",
-  "Paid": "green",
+  Paid: "green",
   "Refund Pending": "purple",
   "Refund Issued": "magenta",
-  "Null": "default",
+  Null: "default",
   "": "default",
 };
 
@@ -111,8 +110,6 @@ const PAYMENT_OPTIONS = [
   "Refund Issued",
   "Null",
 ];
-
-// ---------- component ----------
 
 const EnquiryDashboard = () => {
   const [dealFilter, setDealFilter] = React.useState("all"); // "all" | "open"
@@ -142,13 +139,11 @@ const EnquiryDashboard = () => {
   const updateMutation = useMutation({
     mutationFn: ({ enqId, updates }) => updateEnquiry(enqId, updates),
     onSuccess: (_, variables) => {
-      // Clear edited state for that row
       setEditedRows((prev) => {
         const copy = { ...prev };
         delete copy[variables.enqId];
         return copy;
       });
-      // Refetch all enquiries
       queryClient.invalidateQueries({ queryKey: ["allENQ"] });
     },
   });
@@ -167,6 +162,11 @@ const EnquiryDashboard = () => {
     editedRows[record.id]?.[field] !== undefined
       ? editedRows[record.id][field]
       : record[field];
+
+  const getDealValue = (record) =>
+    getFieldValue(record, "deal") || record.deal || "open";
+
+  const isDealClosed = (record) => getDealValue(record) === "closed";
 
   const isRowDirty = (record) => {
     const edits = editedRows[record.id];
@@ -200,28 +200,72 @@ const EnquiryDashboard = () => {
         title: "ENQ No",
         dataIndex: "enqNo",
         key: "enqNo",
+        width: 90,
         sorter: (a, b) => String(a.enqNo).localeCompare(String(b.enqNo)),
         filters: getUniqueValues(enquiries, "enqNo"),
         onFilter: (value, record) => String(record.enqNo).indexOf(value) === 0,
+        render: (text) => (
+          <Text style={{ fontSize: 12 }} ellipsis>
+            {text}
+          </Text>
+        ),
       },
       {
         title: "SKU",
         dataIndex: "sku",
         key: "sku",
+        width: 100,
         filters: getUniqueValues(enquiries, "sku"),
         onFilter: (value, record) => String(record.sku).indexOf(value) === 0,
+        render: (text) => (
+          <Text style={{ fontSize: 12 }} ellipsis>
+            {text.replace("SCUBA-", "")}
+          </Text>
+        ),
+      },
+      {
+        title: "Deal",
+        dataIndex: "deal",
+        key: "deal",
+        width: 110,
+        filters: [
+          { text: "Open", value: "open" },
+          { text: "Closed", value: "closed" },
+        ],
+        onFilter: (value, record) =>
+          (record.deal || "open").toLowerCase() === value.toLowerCase(),
+        render: (_, record) => {
+          const deal = getDealValue(record);
+          return (
+            <Select
+              size="small"
+              variant="borderless"
+              value={deal}
+              onChange={(val) => handleFieldChange(record.id, "deal", val)}
+              style={{ width: "100%" }}
+            >
+              <Select.Option value="open"size="small">
+                <Tag size="small" color="orange">Open</Tag>
+              </Select.Option>
+              <Select.Option value="closed"size="small">
+                <Tag size="small" color="green">Closed</Tag>
+              </Select.Option>
+            </Select>
+          );
+        },
       },
       {
         title: "Email",
         dataIndex: "email",
         key: "email",
+        width: 200,
         filters: getUniqueValues(enquiries, "email"),
         onFilter: (value, record) => String(record.email).indexOf(value) === 0,
         render: (_, record) => {
           const email = record.email;
           const masked = maskEmail(email);
           const phone = record.phoneNo || "";
-          const cleanPhone = phone.replace(/[^\d]/g, ""); // remove + and spaces
+          const cleanPhone = phone.replace(/[^\d]/g, "");
 
           const handleCopy = async () => {
             try {
@@ -239,7 +283,7 @@ const EnquiryDashboard = () => {
 
           return (
             <Space size="small">
-              <Text type="secondary" style={{ fontSize: 12 }}>
+              <Text type="secondary" style={{ fontSize: 12 }} ellipsis>
                 {masked}
               </Text>
               <Tooltip title="Copy email">
@@ -264,32 +308,46 @@ const EnquiryDashboard = () => {
         },
       },
       {
-        title: "Group Size",
+        title: "Group",
         dataIndex: "groupSize",
         key: "groupSize",
+        width: 60,
         render: (_, record) => {
-          const value = getFieldValue(record, "groupSize") ?? 0;
+          const disabled = isDealClosed(record);
+          let value = getFieldValue(record, "groupSize");
+          if (value === undefined || value === null) value = 0;
+
+          const handleChange = (val) => {
+            let num = Number(val || 0);
+            if (num < 0) num = 0;
+            if (num > 99) num = 99;
+            handleFieldChange(record.id, "groupSize", num);
+          };
+
           return (
             <InputNumber
               min={0}
               max={99}
               value={value}
               size="small"
-              onChange={(val) => handleFieldChange(record.id, "groupSize", val)}
-              // style={{ width: "100%" }}
+              disabled={disabled}
+              onChange={handleChange}
+              style={{ width: 40 }}
             />
           );
         },
       },
       {
-        title: "Preferred Date",
+        title: "Preferred",
         dataIndex: "preferredDate",
         key: "preferredDate",
+        width: 120,
         sorter: (a, b) =>
           String(a.preferredDate || "").localeCompare(
             String(b.preferredDate || "")
           ),
         render: (_, record) => {
+          const disabled = isDealClosed(record);
           const value = getFieldValue(record, "preferredDate");
           const dateValue = value ? dayjs(value) : null;
           return (
@@ -297,33 +355,37 @@ const EnquiryDashboard = () => {
               size="small"
               value={dateValue}
               format="YYYY-MM-DD"
+              disabled={disabled}
               onChange={(_, dateString) =>
                 handleFieldChange(record.id, "preferredDate", dateString || "")
               }
+              style={{ width: 110 }}
             />
           );
         },
       },
-      
       {
         title: "Status",
         dataIndex: "status",
         key: "status",
+        width: 160,
         filters: getUniqueValues(enquiries, "status"),
         onFilter: (value, record) => String(record.status).indexOf(value) === 0,
         render: (_, record) => {
+          const disabled = isDealClosed(record);
           const status = getFieldValue(record, "status") || "Created";
           return (
             <Select
-            variant="borderless"
+              variant="borderless"
               size="small"
               value={status}
+              disabled={disabled}
               onChange={(val) => handleFieldChange(record.id, "status", val)}
               style={{ width: "100%" }}
             >
               {STATUS_OPTIONS.map((s) => (
-                <Select.Option key={s} value={s}>
-                  <Tag color={STATUS_COLORS[s] || "default"}>{s}</Tag>
+                <Select.Option key={s} value={s}size="small">
+                  <Tag size="small" color={STATUS_COLORS[s] || "default"}>{s}</Tag>
                 </Select.Option>
               ))}
             </Select>
@@ -331,9 +393,10 @@ const EnquiryDashboard = () => {
         },
       },
       {
-        title: "Payment Status",
+        title: "Payment",
         dataIndex: "paymentStatus",
         key: "paymentStatus",
+        width: 170,
         filters: getUniqueValues(enquiries, "paymentStatus"),
         onFilter: (value, record) =>
           String(record.paymentStatus).indexOf(value) === 0,
@@ -343,6 +406,7 @@ const EnquiryDashboard = () => {
           const canEditPayment = !["Created", "Assigned", "Discussed"].includes(
             currentStatus
           );
+          const disabled = !canEditPayment || isDealClosed(record);
 
           let payment = getFieldValue(record, "paymentStatus");
           if (!payment) payment = "Null";
@@ -352,7 +416,7 @@ const EnquiryDashboard = () => {
               size="small"
               variant="borderless"
               value={payment}
-              disabled={!canEditPayment}
+              disabled={disabled}
               onChange={(val) =>
                 handleFieldChange(
                   record.id,
@@ -363,8 +427,8 @@ const EnquiryDashboard = () => {
               style={{ width: "100%" }}
             >
               {PAYMENT_OPTIONS.map((s) => (
-                <Select.Option key={s} value={s}>
-                  <Tag color={PAYMENT_COLORS[s] || "default"}>{s}</Tag>
+                <Select.Option key={s} value={s} size="small">
+                  <Tag size="small" color={PAYMENT_COLORS[s] || "default"}>{s}</Tag>
                 </Select.Option>
               ))}
             </Select>
@@ -375,7 +439,9 @@ const EnquiryDashboard = () => {
         title: "Quote / Invoice",
         dataIndex: "link",
         key: "link",
+        width: 120,
         render: (_, record) => {
+          const disabled = isDealClosed(record);
           const value = getFieldValue(record, "link") || "";
           const hasValue = !!value;
           const openLink = () => {
@@ -383,14 +449,16 @@ const EnquiryDashboard = () => {
             window.open(value, "_blank", "noopener,noreferrer");
           };
           return (
-            <Space.Compact style={{ width: "100%" }}>
+            <Space.Compact style={{ width: 120 }}>
               <Input
                 size="small"
                 value={value}
                 placeholder="link"
+                disabled={disabled}
                 onChange={(e) =>
                   handleFieldChange(record.id, "link", e.target.value)
                 }
+                style={{ width: 100 }}
               />
               <Tooltip title="Open link">
                 <Button
@@ -405,9 +473,10 @@ const EnquiryDashboard = () => {
         },
       },
       {
-        title: "Created At",
+        title: "Created",
         dataIndex: "createdAtDate",
         key: "createdAtDate",
+        width: 110,
         sorter: (a, b) => {
           const da = a.createdAtDate ? a.createdAtDate.getTime() : 0;
           const db = b.createdAtDate ? b.createdAtDate.getTime() : 0;
@@ -425,21 +494,25 @@ const EnquiryDashboard = () => {
           record.createdAtDateStr.indexOf(value) === 0,
         render: (_, record) =>
           record.createdAtDate
-            ? record.createdAtDate.toLocaleString()
+            ? dayjs(record.createdAtDate).format("DD/MM/YYYY")
             : "-",
-      },{
+      },
+      {
         title: "Swimming",
         dataIndex: "knowSwimming",
         key: "knowSwimming",
+        width: 100,
         filters: getUniqueValues(enquiries, "knowSwimming"),
-                onFilter: (value, record) => String(record.knowSwimming).indexOf(value) === 0,
-
+        onFilter: (value, record) =>
+          String(record.knowSwimming).indexOf(value) === 0,
         render: (_, record) => {
+          const disabled = isDealClosed(record);
           const raw = getFieldValue(record, "knowSwimming");
           const checked = raw === true || raw === "Yes";
           return (
             <Checkbox
               checked={checked}
+              disabled={disabled}
               onChange={(e) =>
                 handleFieldChange(
                   record.id,
@@ -447,15 +520,15 @@ const EnquiryDashboard = () => {
                   e.target.checked ? "Yes" : ""
                 )
               }
-            >
-              Yes
-            </Checkbox>
+              />
+              
           );
         },
       },
       {
         title: "Actions",
         key: "actions",
+        width: 90,
         fixed: "right",
         render: (_, record) => {
           const dirty = isRowDirty(record);
@@ -481,22 +554,29 @@ const EnquiryDashboard = () => {
   }, [enquiries, editedRows, updateMutation.isPending]);
 
   return (
-    <div style={{ padding: 16 }}>
+    <div style={{ padding: 12 }}>
       <Space
         direction="vertical"
-        size="middle"
-        style={{ width: "100%", marginBottom: 16 }}
+        size="small"
+        style={{ width: "100%", marginBottom: 8 }}
       >
-        <Text strong style={{ fontSize: 18 }}>
+        <Text strong style={{ fontSize: 16 }}>
           Enquiry Dashboard
         </Text>
 
         {/* Top filters: email search + open/all toggle */}
-        <Space wrap style={{ width: "100%", justifyContent: "space-between" }}>
+        <Space
+          wrap
+          style={{
+            width: "100%",
+            justifyContent: "space-between",
+          }}
+        >
           <Search
             allowClear
             placeholder="Search by email"
-            style={{ maxWidth: 320 }}
+            style={{ maxWidth: 280 }}
+            size="small"
             onSearch={(value) => setEmailQuery(value.trim())}
             onChange={(e) => {
               if (!e.target.value) setEmailQuery("");
@@ -504,6 +584,7 @@ const EnquiryDashboard = () => {
           />
 
           <Segmented
+            size="small"
             options={[
               { label: "All Enquiries", value: "all" },
               { label: "Open Deals", value: "open" },
@@ -525,7 +606,8 @@ const EnquiryDashboard = () => {
           showTotal: (total) => `Total ${total} enquiries`,
         }}
         rowKey="id"
-        scroll={{ x: "max-content" }}
+        tableLayout="fixed"
+        // no horizontal scroll -> try to keep everything compact
       />
 
       {isError && (
