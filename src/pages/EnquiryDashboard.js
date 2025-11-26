@@ -11,7 +11,7 @@ import {
   Select,
   Tag,
   Button,
-  Tooltip,
+  Tooltip,message
 } from "antd";
 import {
   CopyOutlined,
@@ -58,6 +58,22 @@ const getUniqueValues = (data = [], key) => {
     value,
   }));
 };
+// Firestore TS -> dayjs
+const tsToDayjs = (ts) => {
+  if (!ts || !ts.seconds) return null;
+  const ms = ts.seconds * 1000 + (ts.nanoseconds || 0) / 1e6;
+  return dayjs(ms);
+};
+
+// dayjs -> Firestore TS
+const dayjsToTs = (d) => {
+  if (!d) return null;
+  const ms = d.valueOf();
+  return {
+    seconds: Math.floor(ms / 1000),
+    nanoseconds: (ms % 1000) * 1e6,
+  };
+};
 
 // Normalize API data for table
 const normalizeEnquiries = (enquiries = []) =>
@@ -75,21 +91,21 @@ const normalizeEnquiries = (enquiries = []) =>
 
 // Status colors
 const STATUS_COLORS = {
-  Created: "default",
-  Assigned: "blue",
-  Discussed: "cyan",
+  "Created": "blue",
+  "Assigned": "geekblue",
+  "Discussed": "magenta",
   "Quote Sent": "orange",
-  Invoiced: "purple",
+  "Invoiced": "purple",
   "Service Provided": "green",
   "Service Canceled": "red",
 };
 
 const PAYMENT_COLORS = {
   "Payment Pending": "orange",
-  Paid: "green",
+  "Paid": "green",
   "Refund Pending": "purple",
   "Refund Issued": "magenta",
-  Null: "default",
+  "Null": "default",
   "": "default",
 };
 
@@ -108,11 +124,11 @@ const PAYMENT_OPTIONS = [
   "Paid",
   "Refund Pending",
   "Refund Issued",
-  "Null",
+  "",
 ];
 
 const EnquiryDashboard = () => {
-  const [dealFilter, setDealFilter] = React.useState("all"); // "all" | "open"
+  const [dealFilter, setDealFilter] = React.useState("open"); // "all" | "open"
   const [emailQuery, setEmailQuery] = React.useState("");
   const [editedRows, setEditedRows] = React.useState({}); // { [enqId]: { field: value } }
 
@@ -139,13 +155,16 @@ const EnquiryDashboard = () => {
   const updateMutation = useMutation({
     mutationFn: ({ enqId, updates }) => updateEnquiry(enqId, updates),
     onSuccess: (_, variables) => {
+      message.success("Enquiry updated successfully.");
+      queryClient.invalidateQueries({ queryKey: ["allENQ"] });
       setEditedRows((prev) => {
         const copy = { ...prev };
         delete copy[variables.enqId];
         return copy;
       });
-      queryClient.invalidateQueries({ queryKey: ["allENQ"] });
-    },
+    },onError: (error) => {
+      message.error("Failed to update enquiry.",error);
+    }
   });
 
   const handleFieldChange = (enqId, field, value) => {
@@ -227,7 +246,7 @@ const EnquiryDashboard = () => {
         title: "Deal",
         dataIndex: "deal",
         key: "deal",
-        width: 110,
+        width: 120,
         filters: [
           { text: "Open", value: "open" },
           { text: "Closed", value: "closed" },
@@ -244,11 +263,15 @@ const EnquiryDashboard = () => {
               onChange={(val) => handleFieldChange(record.id, "deal", val)}
               style={{ width: "100%" }}
             >
-              <Select.Option value="open"size="small">
-                <Tag size="small" color="orange">Open</Tag>
+              <Select.Option value="open" size="small">
+                <Tag size="small" color="orange">
+                  Open
+                </Tag>
               </Select.Option>
-              <Select.Option value="closed"size="small">
-                <Tag size="small" color="green">Closed</Tag>
+              <Select.Option value="closed" size="small">
+                <Tag size="small" color="green">
+                  Closed
+                </Tag>
               </Select.Option>
             </Select>
           );
@@ -342,23 +365,44 @@ const EnquiryDashboard = () => {
         dataIndex: "preferredDate",
         key: "preferredDate",
         width: 120,
-        sorter: (a, b) =>
-          String(a.preferredDate || "").localeCompare(
-            String(b.preferredDate || "")
-          ),
+        sorter: (a, b) => {
+          const getMs = (rec) => {
+            const pd = rec.preferredDate;
+            if (pd && pd.seconds) {
+              return pd.seconds * 1000 + (pd.nanoseconds || 0) / 1e6;
+            }
+            return 0;
+          };
+          return getMs(a) - getMs(b);
+        },
         render: (_, record) => {
           const disabled = isDealClosed(record);
-          const value = getFieldValue(record, "preferredDate");
-          const dateValue = value ? dayjs(value) : null;
+
+          // read current value (prefer edited, else original from server)
+          const raw =
+            getFieldValue(record, "preferredDate") ?? record.preferredDate;
+
+          // support Firestore TS, but also fallback if you ever stored string
+          const dateValue = raw?.seconds
+            ? tsToDayjs(raw)
+            : raw
+            ? dayjs(raw)
+            : null;
+
+          const handleChange = (date) => {
+            const ts = dayjsToTs(date); // Firestore {seconds, nanoseconds} or null
+            handleFieldChange(record.id, "preferredDate", ts);
+          };
+
           return (
             <DatePicker
+            allowClear={false}
+            inputReadOnly={true}
               size="small"
               value={dateValue}
-              format="YYYY-MM-DD"
+              format="DD-MM-YYYY"
               disabled={disabled}
-              onChange={(_, dateString) =>
-                handleFieldChange(record.id, "preferredDate", dateString || "")
-              }
+              onChange={handleChange}
               style={{ width: 110 }}
             />
           );
@@ -368,7 +412,7 @@ const EnquiryDashboard = () => {
         title: "Status",
         dataIndex: "status",
         key: "status",
-        width: 160,
+        width: 170,
         filters: getUniqueValues(enquiries, "status"),
         onFilter: (value, record) => String(record.status).indexOf(value) === 0,
         render: (_, record) => {
@@ -384,8 +428,10 @@ const EnquiryDashboard = () => {
               style={{ width: "100%" }}
             >
               {STATUS_OPTIONS.map((s) => (
-                <Select.Option key={s} value={s}size="small">
-                  <Tag size="small" color={STATUS_COLORS[s] || "default"}>{s}</Tag>
+                <Select.Option key={s} value={s} size="small">
+                  <Tag size="small" color={STATUS_COLORS[s] || "default"}>
+                    {s}
+                  </Tag>
                 </Select.Option>
               ))}
             </Select>
@@ -409,7 +455,7 @@ const EnquiryDashboard = () => {
           const disabled = !canEditPayment || isDealClosed(record);
 
           let payment = getFieldValue(record, "paymentStatus");
-          if (!payment) payment = "Null";
+          if (!payment) payment = null;
 
           return (
             <Select
@@ -428,7 +474,9 @@ const EnquiryDashboard = () => {
             >
               {PAYMENT_OPTIONS.map((s) => (
                 <Select.Option key={s} value={s} size="small">
-                  <Tag size="small" color={PAYMENT_COLORS[s] || "default"}>{s}</Tag>
+                  <Tag size="small" color={PAYMENT_COLORS[s] || "default"}>
+                    {s}
+                  </Tag>
                 </Select.Option>
               ))}
             </Select>
@@ -439,7 +487,7 @@ const EnquiryDashboard = () => {
         title: "Quote / Invoice",
         dataIndex: "link",
         key: "link",
-        width: 120,
+        width: 130,
         render: (_, record) => {
           const disabled = isDealClosed(record);
           const value = getFieldValue(record, "link") || "";
@@ -452,7 +500,7 @@ const EnquiryDashboard = () => {
             <Space.Compact style={{ width: 120 }}>
               <Input
                 size="small"
-                value={value}
+                value={value.replaceAll("https://", "").replaceAll("http://", "")}
                 placeholder="link"
                 disabled={disabled}
                 onChange={(e) =>
@@ -520,8 +568,7 @@ const EnquiryDashboard = () => {
                   e.target.checked ? "Yes" : ""
                 )
               }
-              />
-              
+            />
           );
         },
       },

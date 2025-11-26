@@ -11,7 +11,7 @@ export async function getScuba() {
   } catch (err) {}
 }
 export async function getDetail(sku) {
-  const requestUrl = `${BASE_URL}/scuba/${sku}`;
+  const requestUrl = `${BASE_URL}/sku/details/${sku}`;
   try {
     console.log("requestUrl", requestUrl);
     const response = await axios.get(requestUrl);
@@ -22,7 +22,7 @@ export async function getDetail(sku) {
 export async function postQuote(body) {
   console.log("body", body);
 
-  const requestUrl = `${BASE_URL}/scuba/booking/request?type=quote`;
+  const requestUrl = `${BASE_URL}/enquiries/request?type=quote`;
   try {
     const response = axios.post(requestUrl, body);
     return response;
@@ -31,7 +31,7 @@ export async function postQuote(body) {
 export async function postReserve(body) {
   console.log("body", body);
 
-  const requestUrl = `${BASE_URL}/scuba/booking/request?type=reserve`;
+  const requestUrl = `${BASE_URL}/enquiries/request?type=reserve`;
   try {
     const response = axios.post(requestUrl, body);
     return response;
@@ -58,17 +58,16 @@ export const updatePhoneNumber = async (data) => {
 };
 
 export const getallENQ = async (queryString = "") => {
-  const res = await axios.get(`${BASE_URL}/scuba/enquiries/all${queryString}`);
+  const res = await axios.get(`${BASE_URL}/all/enquiries${queryString}`);
   console.log("res in api", res);
   return res.data;
 };
 export const updateEnquiry = async (enqId, updates) => {
-  const res = await axios.post(`${BASE_URL}/scuba/enquiries/update`, {
-    enqId,
-    ...updates,
-  });
+  let requestUrl = `${BASE_URL}/enquiries/update/${enqId}`;
+  const res = await axios.post(requestUrl,updates);
   return res.data;
 };
+
 export async function getInvites(wandererId) {
   const requestUrl = `${BASE_URL}/wander/inivitation?wandererId=${wandererId}`;
   try {
