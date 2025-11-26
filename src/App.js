@@ -12,6 +12,7 @@ import About from "./pages/About";
 import Detail from "./pages/Detail";
 import Profile from "./pages/Profile";
 import EnquiryDashboard from "./pages/EnquiryDashboard";
+import MyEnquiriesView from "./components/MyEnquiriesView";
 function App() {
   const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ function App() {
             <Route path="/skydive" element={<Skydive />} />
             <Route path="/about" element={<About />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/my-enquiries" element={<MyEnquiriesView />} />
             <Route
               path="/admin/enquiry/dashboard"
               element={<EnquiryDashboard />}

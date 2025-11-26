@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Cookies from "js-cookie";
 import { Link, useNavigate } from "react-router-dom";
 import { app } from "../firebaseconfig";
 import {
@@ -24,9 +25,8 @@ import {
   LogoutOutlined,
   UserOutlined,
   GoogleOutlined,
-  
 } from "@ant-design/icons";
-import{
+import {
   getAuth,
   signOut,
   signInWithPopup,
@@ -36,7 +36,8 @@ import{
 import { useLocation } from "react-router-dom";
 import AuthTabsModal from "./AuthTabsModal";
 import { useMutation } from "@tanstack/react-query";
-import { loginWithGoogle } from "../services/api";
+import { getMyDetails, loginWithGoogle } from "../services/api";
+import { useQuery } from "@tanstack/react-query";
 
 const { useBreakpoint } = Grid;
 
@@ -52,12 +53,21 @@ const Navbar = () => {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem("user")) || null;
+      return Cookies.get("user");
     } catch {
       return null;
     }
-  })
+  });
 
+  const { data: userDetails } = useQuery({
+    queryKey: ["myDetails"],
+    queryFn: async () => {
+      const response = await getMyDetails(user);
+      return response.data;
+    },
+    enabled: !!user,
+    refetchOnWindowFocus: false,
+  });
 
   const openDrawer = () => setDrawerOpen(true);
   const closeDrawer = () => setDrawerOpen(false);
@@ -68,23 +78,27 @@ const Navbar = () => {
   };
   const closeAuthModal = () => setAuthModalOpen(false);
 
-
   const loginMutation = useMutation({
     mutationFn: loginWithGoogle,
     onSuccess: (data) => {
-      const userData = data.user || data; 
-        completeLogin(userData);
+      const userData = data.data;
+      completeLogin(userData.email);
     },
     onError: (error) => {
       console.error("Login failed", error);
-      message.error("Login failed: " + (error.response?.data?.message || error.message));
+      message.error(
+        "Login failed: " + (error.response?.data?.message || error.message)
+      );
       setLoading(false);
     },
   });
 
-
   const completeLogin = (userData) => {
-    localStorage.setItem("user", JSON.stringify(userData));
+    Cookies.set("user", userData, {
+      expires: 1, // 1 day
+      secure: true,
+      sameSite: "Strict",
+    });
     setUser(userData);
     message.success("Successfully signed in!");
     closeAuthModal();
@@ -108,7 +122,6 @@ const Navbar = () => {
       };
 
       loginMutation.mutate(payload);
-
     } catch (err) {
       console.error(err);
       message.error(err.message || "Google sign-in failed");
@@ -122,7 +135,7 @@ const Navbar = () => {
     } catch (e) {
       console.warn(e);
     }
-    localStorage.removeItem("user");
+    Cookies.remove("user");
     setUser(null);
     message.success("Logged out");
     navigate("/");
@@ -137,6 +150,9 @@ const Navbar = () => {
     <Menu>
       <Menu.Item key="profile" onClick={() => navigate("/profile")}>
         <UserOutlined /> Profile
+      </Menu.Item>
+      <Menu.Item key="myEnquiries" onClick={() => navigate("/my-enquiries")}>
+        <UserOutlined /> My enquiries
       </Menu.Item>
       <Menu.Item key="logout" onClick={logout}>
         <LogoutOutlined /> Logout
@@ -196,7 +212,11 @@ const Navbar = () => {
               <Row align="middle" gutter={16}>
                 {navItems.map((it) => (
                   <Col key={it.label}>
-                    <Button type="text" disabled={it.disabled} onClick={it.action}>
+                    <Button
+                      type="text"
+                      disabled={it.disabled}
+                      onClick={it.action}
+                    >
                       {it.label}
                     </Button>
                   </Col>
@@ -206,20 +226,17 @@ const Navbar = () => {
                   <>
                     <Col>
                       <Button onClick={() => openAuthModal("signin")}>
-                      Sign In 
+                        Sign In
                       </Button>
                     </Col>
-                    
                   </>
                 ) : (
                   <Col>
                     <Dropdown overlay={profileMenu} placement="bottomRight">
                       <Button>
                         <Space>
-                          <Avatar
-                            src={user.profileImage}
-                          />
-                          {user.displayName || user.email}
+                          <Avatar src={userDetails?.profileImage} />
+                          {userDetails?.displayName || userDetails?.email}
                         </Space>
                       </Button>
                     </Dropdown>
@@ -289,11 +306,30 @@ const Navbar = () => {
             <Menu
               mode="inline"
               style={{ borderRight: 0, marginTop: 10 }}
+              onClick={({ key }) => {
+                if (key === "profile") {
+                  navigate("/profile");
+                  closeDrawer();
+                }
+                if (key === "myEnquiries") {
+                  navigate("/my-enquiries");
+                  closeDrawer();
+                }
+                if (key === "logout") {
+                  logout();
+                  closeDrawer();
+                }
+              }}
               items={[
                 {
                   key: "profile",
                   icon: <UserOutlined />,
                   label: "My Profile",
+                },
+                {
+                  key: "myEnquiries",
+                  icon: <UserOutlined />,
+                  label: "My Enquiries",
                 },
                 {
                   key: "logout",
@@ -305,12 +341,12 @@ const Navbar = () => {
           )}
         </div>
       </Drawer>
-<AuthTabsModal
-  visible={authModalOpen}
-  onClose={closeAuthModal}
-  loading={loading}
-  handleGoogleSignIn={handleGoogleSignIn}
-/>
+      <AuthTabsModal
+        visible={authModalOpen}
+        onClose={closeAuthModal}
+        loading={loading}
+        handleGoogleSignIn={handleGoogleSignIn}
+      />
     </>
   );
 };

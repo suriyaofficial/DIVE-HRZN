@@ -1,26 +1,35 @@
 import axios from "axios";
 import { BASE_URL } from "../common.ts";
 
+export async function getMyDetails(email) {
+  const requestUrl = `${BASE_URL}/my/details/${email}`;
+  try {
+    // console.log("requestUrl", requestUrl);
+    const response = await axios.get(requestUrl);
+    // console.log("getMyDetails api response", response);
+    return response.data;
+  } catch (err) {}
+}
 export async function getScuba() {
   const requestUrl = `${BASE_URL}/scuba`;
   try {
-    console.log("requestUrl", requestUrl);
+    // console.log("requestUrl", requestUrl);
     const response = await axios.get(requestUrl);
-    console.log("api response", response.data);
+    // console.log("api response", response.data);
     return response.data;
   } catch (err) {}
 }
 export async function getDetail(sku) {
   const requestUrl = `${BASE_URL}/sku/details/${sku}`;
   try {
-    console.log("requestUrl", requestUrl);
+    // console.log("requestUrl", requestUrl);
     const response = await axios.get(requestUrl);
-    console.log("api response", response.data);
+    // console.log("api response", response.data);
     return response.data;
   } catch (err) {}
 }
 export async function postQuote(body) {
-  console.log("body", body);
+  // console.log("body", body);
 
   const requestUrl = `${BASE_URL}/enquiries/request?type=quote`;
   try {
@@ -29,7 +38,7 @@ export async function postQuote(body) {
   } catch (err) {}
 }
 export async function postReserve(body) {
-  console.log("body", body);
+  // console.log("body", body);
 
   const requestUrl = `${BASE_URL}/enquiries/request?type=reserve`;
   try {
@@ -48,7 +57,7 @@ export const loginWithGoogle = async (userData) => {
 
 export const updatePhoneNumber = async (data) => {
   try {
-    console.log("data", data);
+    // console.log("data", data);
 
     let requestUrl = `${BASE_URL}/auth/update-phone`;
     // data: { email, phone }
@@ -59,7 +68,7 @@ export const updatePhoneNumber = async (data) => {
 
 export const getallENQ = async (queryString = "") => {
   const res = await axios.get(`${BASE_URL}/all/enquiries${queryString}`);
-  console.log("res in api", res);
+  // console.log("res in api", res);
   return res.data;
 };
 export const updateEnquiry = async (enqId, updates) => {

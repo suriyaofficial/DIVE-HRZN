@@ -35,13 +35,8 @@ export default function Detail() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedAction, setSelectedAction] = useState(null);
   const [openCards, setOpenCards] = useState(true);
-  const [user, setUser] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem("user")) || null;
-    } catch {
-      return null;
-    }
-  });
+  const userDetails = queryClient.getQueryData(["myDetails"]);
+
   const tagProps = {
     available: { color: "green", text: "Available" },
     "coming soon": { color: "orange", text: "Coming soon" },
@@ -57,10 +52,10 @@ export default function Detail() {
     staleTime: 1000 * 60 * 5,
   });
   const tag = tagProps[data?.status?.toLowerCase()];
-
+  
   const quoteMutation = useMutation({
     mutationFn: (payload) => postQuote(payload),
-    onSuccess: () => {
+    onSuccess: (data) => {
       message.success("Quote request sent! We will contact you soon.");
       queryClient.invalidateQueries(["detail", sku]);
       setModalOpen(false);
@@ -72,7 +67,7 @@ export default function Detail() {
 
   const reserveMutation = useMutation({
     mutationFn: (payload) => postReserve(payload),
-    onSuccess: () => {
+   onSuccess: (data) => {
       message.success(
         "Reservation successful! Check your email for confirmation."
       );
@@ -94,9 +89,9 @@ export default function Detail() {
     const payload = {
       sku,
       title: data?.title,
-      phoneNo: user?.phoneNo,
-      email: user?.email,
-      name: `${user?.firstName} ${user?.lastName}`,
+      phoneNo: userDetails?.phoneNo,
+      email: userDetails?.email,
+      name: `${userDetails?.firstName} ${userDetails?.lastName}`,
       initiatedDate: new Date().toISOString().split("T")[0],
     };
 
