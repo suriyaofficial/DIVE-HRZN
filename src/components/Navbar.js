@@ -25,6 +25,7 @@ import {
   LogoutOutlined,
   UserOutlined,
   GoogleOutlined,
+  PhoneOutlined,
 } from "@ant-design/icons";
 import {
   getAuth,
@@ -36,7 +37,11 @@ import {
 import { useLocation } from "react-router-dom";
 import AuthTabsModal from "./AuthTabsModal";
 import { useMutation } from "@tanstack/react-query";
-import { getMyDetails, loginWithGoogle } from "../services/api";
+import {
+  getMyDetails,
+  loginWithGoogle,
+  updatePhoneNumber,
+} from "../services/api";
 import { useQuery } from "@tanstack/react-query";
 
 const { useBreakpoint } = Grid;
@@ -58,6 +63,20 @@ const Navbar = () => {
       return null;
     }
   });
+
+  // 👉 new state
+  const [phoneModalOpen, setPhoneModalOpen] = useState(false);
+  const [phone, setPhone] = useState("+91");
+  const [pendingUser, setPendingUser] = useState(null); // user from backend without phone
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const auth = params.get("auth");
+
+    if (auth === "signin") {
+      setAuthModalOpen(true);
+    }
+  }, [location.search]);
 
   const { data: userDetails } = useQuery({
     queryKey: ["myDetails"],
@@ -82,7 +101,19 @@ const Navbar = () => {
     mutationFn: loginWithGoogle,
     onSuccess: (data) => {
       const userData = data.data;
-      completeLogin(userData.email);
+
+      // ✅ If phone already exists -> directly complete login
+      if (userData.phoneNo) {
+        completeLogin(userData);
+        return;
+      }
+
+      // ❌ Phone missing -> ask for it
+      setPendingUser(userData);
+      setPhone("+91"); // default prefix
+      setAuthModalOpen(false); // close auth tabs modal
+      setPhoneModalOpen(true); // open phone modal
+      setLoading(false);
     },
     onError: (error) => {
       console.error("Login failed", error);
@@ -93,22 +124,100 @@ const Navbar = () => {
     },
   });
 
+  const updatePhoneMutation = useMutation({
+    mutationFn: updatePhoneNumber,
+    onSuccess: (data, variables) => {
+      // variables = { email, phoneNo }
+      const updatedUser = {
+        ...pendingUser,
+        phoneNo: variables.phoneNo,
+      };
+      setPhoneModalOpen(false);
+      setPendingUser(null);
+      completeLogin(updatedUser); // finish login flow
+    },
+    onError: (error) => {
+      console.error("Phone update failed", error);
+      message.error(
+        "Failed to save phone number: " +
+          (error.response?.data?.message || error.message)
+      );
+      setLoading(false);
+    },
+  });
+
   const completeLogin = (userData) => {
-    Cookies.set("user", userData, {
+    Cookies.set("user", userData.email, {
       expires: 1, // 1 day
       secure: true,
       sameSite: "Strict",
     });
-    setUser(userData);
+
+    setUser(userData.email);
     message.success("Successfully signed in!");
-    closeAuthModal();
+    setAuthModalOpen(false); // close modal
     setLoading(false);
+
+    // 🔁 Handle redirect back to the page user came from
+    const params = new URLSearchParams(location.search);
+    const redirect = params.get("redirect");
+
+    if (redirect) {
+      navigate(redirect, { replace: true });
+    } else {
+      // clean up ?auth=signin if present
+      if (params.get("auth")) {
+        params.delete("auth");
+        navigate(
+          {
+            pathname: location.pathname,
+            search: params.toString(),
+          },
+          { replace: true }
+        );
+      }
+    }
+  };
+
+  const handlePhoneChange = (e) => {
+    let value = e.target.value;
+
+    // Ensure it always starts with +91
+    if (!value.startsWith("+91")) {
+      value = "+91" + value.replace(/^\+?91?/, "");
+    }
+
+    if (value.length > 15) {
+      value = value.slice(0, 15);
+    }
+
+    setPhone(value);
+  };
+
+  const handlePhoneSubmit = () => {
+    if (!pendingUser) {
+      setPhoneModalOpen(false);
+      return;
+    }
+
+    if (!phone || phone.length < 10) {
+      message.error("Please enter a valid phone number");
+      return;
+    }
+
+    setLoading(true);
+    updatePhoneMutation.mutate({
+      email: pendingUser.email,
+      phoneNo: phone,
+    });
   };
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
       const res = await signInWithPopup(auth, provider);
+      console.log("res", res);
+
       const u = res.user; // Firebase user
       const names = u.displayName ? u.displayName.split(" ") : ["", ""];
       const firstName = names[0];
@@ -118,7 +227,11 @@ const Navbar = () => {
         email: u.email,
         firstName: firstName,
         lastName: lastName,
-        profileImage: u.profileImage,
+        profileImage:
+          u.profileImage ||
+          u.photoURL ||
+          res._tokenResponse?.photoUrl || // fallback from Google OAuth response
+          null,
       };
 
       loginMutation.mutate(payload);
@@ -233,10 +346,13 @@ const Navbar = () => {
                 ) : (
                   <Col>
                     <Dropdown overlay={profileMenu} placement="bottomRight">
-                      <Button>
+                      <Button size="large">
                         <Space>
-                          <Avatar src={userDetails?.profileImage} />
-                          {userDetails?.displayName || userDetails?.email}
+                          <Avatar src={userDetails?.profileImage}>
+                            <UserOutlined />
+                          </Avatar>
+                          {userDetails?.displayName ||
+                            userDetails?.email.split("@")[0]}
                         </Space>
                       </Button>
                     </Dropdown>
@@ -341,6 +457,30 @@ const Navbar = () => {
           )}
         </div>
       </Drawer>
+      <Modal
+        title="Add your phone number"
+        open={phoneModalOpen}
+        onOk={handlePhoneSubmit}
+        onCancel={() => {
+          setPhoneModalOpen(false);
+          setPendingUser(null);
+          setLoading(false);
+        }}
+        confirmLoading={updatePhoneMutation.isPending || loading}
+        okText="Continue"
+      >
+        <p style={{ marginBottom: 8 }}>
+          Please add your phone number to complete sign in.
+        </p>
+        <Input
+          prefix={<PhoneOutlined />}
+          placeholder="Enter phone number"
+          value={phone}
+          onChange={handlePhoneChange}
+          maxLength={15}
+        />
+      </Modal>
+
       <AuthTabsModal
         visible={authModalOpen}
         onClose={closeAuthModal}

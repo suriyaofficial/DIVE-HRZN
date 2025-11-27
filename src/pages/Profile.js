@@ -90,7 +90,9 @@ export default function Profile() {
                   size={96}
                   src={userDetails?.profileImage}
                   icon={!userDetails?.profileImage ? <UserOutlined /> : null}
-                />
+                >
+                  <UserOutlined  />
+                </Avatar>
               </Col>
             </Row>
             {/* Personal details form */}

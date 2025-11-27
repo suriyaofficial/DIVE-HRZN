@@ -24,13 +24,13 @@ function PersonalDetailsForm({
           <Row gutter={16} >
             <Col xs={12} sm={12}>
               <Form.Item label="First name">
-                <Input value={userDetails?.firstName} disabled />
+                <Input value={userDetails?.firstName} disabled={userDetails?.firstName} />
               </Form.Item>
             </Col>
 
             <Col xs={12} sm={12}>
               <Form.Item label="Last name">
-                <Input value={userDetails?.lastName} disabled />
+                <Input value={userDetails?.lastName} disabled={userDetails?.lastName} />
               </Form.Item>
             </Col>
 

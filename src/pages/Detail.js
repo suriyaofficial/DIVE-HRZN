@@ -16,6 +16,11 @@ import {
   Descriptions,
   Space,
   Badge,
+  Input,
+  InputNumber,
+  Alert,
+  Form,
+  Spin,
 } from "antd";
 import { getDetail, postQuote, postReserve } from "../services/api";
 import {
@@ -25,7 +30,11 @@ import {
   PoweroffOutlined,
   CaretUpFilled,
   CaretDownFilled,
+  MailOutlined,
+  PhoneOutlined,
+  WhatsAppOutlined,
 } from "@ant-design/icons";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -36,6 +45,11 @@ export default function Detail() {
   const [selectedAction, setSelectedAction] = useState(null);
   const [openCards, setOpenCards] = useState(true);
   const userDetails = queryClient.getQueryData(["myDetails"]);
+  const [email, setEmail] = useState(userDetails?.email || null);
+  const [phoneNo, setPhoneNo] = useState(userDetails?.phoneNo || "+91");
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isLoggedIn = !!userDetails?.email;
 
   const tagProps = {
     available: { color: "green", text: "Available" },
@@ -52,7 +66,7 @@ export default function Detail() {
     staleTime: 1000 * 60 * 5,
   });
   const tag = tagProps[data?.status?.toLowerCase()];
-  
+
   const quoteMutation = useMutation({
     mutationFn: (payload) => postQuote(payload),
     onSuccess: (data) => {
@@ -67,7 +81,7 @@ export default function Detail() {
 
   const reserveMutation = useMutation({
     mutationFn: (payload) => postReserve(payload),
-   onSuccess: (data) => {
+    onSuccess: (data) => {
       message.success(
         "Reservation successful! Check your email for confirmation."
       );
@@ -79,18 +93,12 @@ export default function Detail() {
     },
   });
 
-  const handleActionClick = (action) => {
-    // action: 'quote' or 'reserve'
-    setSelectedAction(action);
-    setModalOpen(true);
-  };
-
   const handleConfirm = (values) => {
     const payload = {
       sku,
       title: data?.title,
-      phoneNo: userDetails?.phoneNo,
-      email: userDetails?.email,
+      email: email,
+      phoneNo: phoneNo,
       name: `${userDetails?.firstName} ${userDetails?.lastName}`,
       initiatedDate: new Date().toISOString().split("T")[0],
     };
@@ -107,10 +115,6 @@ export default function Detail() {
     [data]
   );
 
-  if (isLoading) return <div>Loading...</div>;
-  if (isError)
-    return <div>Unable to load details. Please try again later.</div>;
-
   // Helper: render list only when present and non-empty — replaced Antd List with semantic ul/li
   const renderBulletList = (title, arr) => {
     if (!Array.isArray(arr) || arr.length === 0) return null;
@@ -125,6 +129,19 @@ export default function Detail() {
         </ul>
       </Card>
     );
+  };
+  const handleActionClick = (action) => {
+    if (!isLoggedIn) {
+      // send user to home with auth=signin and redirect back to this page after login
+      const redirectTo = encodeURIComponent(
+        location.pathname + location.search
+      );
+      navigate(`/?auth=signin&redirect=${redirectTo}`);
+      return;
+    }
+
+    setSelectedAction(action);
+    setModalOpen(true);
   };
 
   // Itinerary timeline (keeps Timeline)
@@ -171,233 +188,311 @@ export default function Detail() {
   };
 
   return (
-    <div style={{ padding: 24 }}>
-      <Row gutter={[24, 24]}>
-        <Col xs={24} md={10} lg={8}>
-          <Card bordered={false} bodyStyle={{ padding: 8 }}>
-            {photos.length > 0 ? (
-              <div>
-                <Image.PreviewGroup>
-                  <div style={{ textAlign: "center" }}>
-                    <Image
-                      src={photos[0]}
-                      style={{
-                        maxHeight: 420,
-                        objectFit: "cover",
-                        borderRadius: 6,
-                      }}
-                    />
-                  </div>
+    <>
+      {isLoading ? (
+        <div style={{ padding: 24 }}>
+          <Row gutter={[24, 24]}>
+            <Col xs={24} md={10} lg={8}>
+              <Card bordered={false} bodyStyle={{ padding: 8 }}>
+                {photos.length > 0 ? (
+                  <div>
+                    <Image.PreviewGroup>
+                      <div style={{ textAlign: "center" }}>
+                        <Image
+                          src={photos[0]}
+                          style={{
+                            maxHeight: 420,
+                            objectFit: "cover",
+                            borderRadius: 6,
+                          }}
+                        />
+                      </div>
 
-                  {/* Thumbnails */}
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: 8,
-                      marginTop: 8,
-                      overflowX: "auto",
-                      paddingBottom: 6,
-                    }}
-                  >
-                    {photos.map((src, i) => (
-                      <Image
-                        key={i}
-                        src={src}
-                        width={80}
-                        height={60}
-                        preview={true}
-                        style={{
-                          objectFit: "cover",
-                          borderRadius: 4,
-                          cursor: "pointer",
-                        }}
-                      />
-                    ))}
-                  </div>
-                </Image.PreviewGroup>
-              </div>
-            ) : (
-              <div
-                style={{
-                  height: 420,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <div>No photos available</div>
-              </div>
-            )}
-          </Card>
-          <Badge.Ribbon text={tag.text} color={tag.color}>
-            <Card style={{ marginTop: 16 }}>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: 20, fontWeight: 700 }}>
-                    {data?.title}
-                  </div>
-                  <div style={{ color: "#666", marginTop: 6 }}>{data?.SKU}</div>
-
-                  {/* Inline meta row: group size / date / place (renders only when present) */}
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: 12,
-                      marginTop: 10,
-                      alignItems: "center",
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    {data?.group_size != null && (
+                      {/* Thumbnails */}
                       <div
                         style={{
                           display: "flex",
-                          alignItems: "center",
-                          gap: 6,
-                          color: "#333",
+                          gap: 8,
+                          marginTop: 8,
+                          overflowX: "auto",
+                          paddingBottom: 6,
                         }}
-                        aria-label="group-size"
                       >
-                        <UserOutlined style={{ fontSize: 16 }} />
-                        <span style={{ fontSize: 14 }}>
-                          {data.group_size}{" "}
-                          {String(data.group_size) === "1"
-                            ? "person"
-                            : "persons"}
-                        </span>
+                        {photos.map((src, i) => (
+                          <Image
+                            key={i}
+                            src={src}
+                            width={80}
+                            height={60}
+                            preview={true}
+                            style={{
+                              objectFit: "cover",
+                              borderRadius: 4,
+                              cursor: "pointer",
+                            }}
+                          />
+                        ))}
                       </div>
-                    )}
-
-                    {data?.dates && (
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 6,
-                          color: "#333",
-                        }}
-                        aria-label="date"
-                      >
-                        <CalendarOutlined style={{ fontSize: 16 }} />
-                        <span style={{ fontSize: 14 }}>{data.dates}</span>
-                      </div>
-                    )}
-
-                    {data?.place && (
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 6,
-                          color: "#333",
-                        }}
-                        aria-label="place"
-                      >
-                        <EnvironmentOutlined style={{ fontSize: 16 }} />
-                        <span style={{ fontSize: 14 }}>{data.place}</span>
-                      </div>
-                    )}
+                    </Image.PreviewGroup>
                   </div>
-                </div>
-
-                <div>
-                  {data?.price ? (
-                    <Tag
-                      color="green"
-                      style={{ fontSize: 16, padding: "6px 12px" }}
-                    >
-                      {data.currency
-                        ? `${data.currency} ${data.price}`
-                        : `${data.price}`}
-                    </Tag>
-                  ) : (
-                    <Tag color="blue">Price on request</Tag>
-                  )}
-                </div>
-              </div>
-
-              <Divider />
-
-              {/* Action button */}
-              <Space>
-                {data?.price ? (
-                  <Button
-                    type="primary"
-                    onClick={() => handleActionClick("reserve")}
-                    loading={reserveMutation.isLoading}
-                    disabled={tag.text === "Sold out"}
-                  >
-                    Reserve the Seat
-                  </Button>
                 ) : (
-                  <Button
-                    type="primary"
-                    onClick={() => handleActionClick("quote")}
-                    loading={quoteMutation.isLoading}
+                  <div
+                    style={{
+                      height: 420,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
                   >
-                    Get Quote
-                  </Button>
+                    <div>No photos available</div>
+                  </div>
                 )}
-              </Space>
-            </Card>
-          </Badge.Ribbon>
-        </Col>
+              </Card>
+              <Badge.Ribbon text={tag.text} color={tag.color}>
+                <Card style={{ marginTop: 16 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: 20, fontWeight: 700 }}>
+                        {data?.title}
+                      </div>
+                      <div style={{ color: "#666", marginTop: 6 }}>
+                        {data?.SKU}
+                      </div>
 
-        <Col xs={24} md={14} lg={16}>
-          {/* Description */}
-          {data?.description && (
-            <>
-              <Title>{data.title}</Title>
-              <Paragraph style={{ whiteSpace: "pre-wrap" }}>
-                {data.description}
-              </Paragraph>
-            </>
-          )}
+                      {/* Inline meta row: group size / date / place (renders only when present) */}
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: 12,
+                          marginTop: 10,
+                          alignItems: "center",
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        {data?.group_size != null && (
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 6,
+                              color: "#333",
+                            }}
+                            aria-label="group-size"
+                          >
+                            <UserOutlined style={{ fontSize: 16 }} />
+                            <span style={{ fontSize: 14 }}>
+                              {data.group_size}{" "}
+                              {String(data.group_size) === "1"
+                                ? "person"
+                                : "persons"}
+                            </span>
+                          </div>
+                        )}
 
-          {/* Pre requirements / Includes / Excludes */}
-          {renderBulletList("Pre-requirements", data?.pre_requerments)}
-          {renderBulletList("Included", data?.included)}
-          {renderBulletList("Excluded", data?.excluded)}
+                        {data?.dates && (
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 6,
+                              color: "#333",
+                            }}
+                            aria-label="date"
+                          >
+                            <CalendarOutlined style={{ fontSize: 16 }} />
+                            <span style={{ fontSize: 14 }}>{data.dates}</span>
+                          </div>
+                        )}
 
-          {/* Itinerary timeline */}
-          {renderItinerary(data?.itinerary)}
-        </Col>
-      </Row>
+                        {data?.place && (
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 6,
+                              color: "#333",
+                            }}
+                            aria-label="place"
+                          >
+                            <EnvironmentOutlined style={{ fontSize: 16 }} />
+                            <span style={{ fontSize: 14 }}>{data.place}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
-      <Modal
-        title={
-          selectedAction === "quote" ? "Request a Quote" : "Reserve the Seat"
-        }
-        open={modalOpen}
-        onCancel={() => setModalOpen(false)}
-        onOk={() => handleConfirm()}
-        okText={
-          selectedAction === "quote"
-            ? "Send Quote Request"
-            : "Confirm Reservation"
-        }
-        confirmLoading={quoteMutation.isLoading || reserveMutation.isLoading}
-      >
-        <div>
-          <Paragraph>
-            {selectedAction === "quote"
-              ? "We will contact you with a personalized quote for this package."
-              : "Confirm your reservation — we will send booking details to your email."}
-          </Paragraph>
-          <Paragraph>
-            <Text strong>Package:</Text> {data?.title}
-          </Paragraph>
-          <Paragraph>
-            <Text strong>SKU:</Text> {sku}
-          </Paragraph>
+                    <div>
+                      {data?.price ? (
+                        <Tag
+                          color="green"
+                          style={{ fontSize: 16, padding: "6px 12px" }}
+                        >
+                          {data.currency
+                            ? `${data.currency} ${data.price}`
+                            : `${data.price}`}
+                        </Tag>
+                      ) : (
+                        <Tag color="blue">Price on request</Tag>
+                      )}
+                    </div>
+                  </div>
+
+                  <Divider />
+
+                  {/* Action button */}
+                  {isLoggedIn ? (
+                    <Space>
+                      {data?.price ? (
+                        <Button
+                          type="primary"
+                          onClick={() => handleActionClick("reserve")}
+                          loading={reserveMutation.isLoading}
+                          disabled={tag.text === "Sold out"}
+                        >
+                          Reserve the Seat
+                        </Button>
+                      ) : (
+                        <Button
+                          type="primary"
+                          onClick={() => handleActionClick("quote")}
+                          loading={quoteMutation.isLoading}
+                        >
+                          Get Quote
+                        </Button>
+                      )}
+                    </Space>
+                  ) : (
+                    <Button
+                      type="primary"
+                      onClick={() => handleActionClick("quote")}
+                    >
+                      Sign In to Continue
+                    </Button>
+                  )}
+                </Card>
+              </Badge.Ribbon>
+            </Col>
+
+            <Col xs={24} md={14} lg={16}>
+              {/* Description */}
+              {data?.description && (
+                <>
+                  <Title>{data.title}</Title>
+                  <Paragraph style={{ whiteSpace: "pre-wrap" }}>
+                    {data.description}
+                  </Paragraph>
+                </>
+              )}
+
+              {/* Pre requirements / Includes / Excludes */}
+              {renderBulletList("Pre-requirements", data?.pre_requerments)}
+              {renderBulletList("Included", data?.included)}
+              {renderBulletList("Excluded", data?.excluded)}
+
+              {/* Itinerary timeline */}
+              {renderItinerary(data?.itinerary)}
+            </Col>
+          </Row>
+
+          <Modal
+            title={
+              selectedAction === "quote"
+                ? "Request a Quote"
+                : "Reserve Your Seat"
+            }
+            open={modalOpen}
+            onCancel={() => setModalOpen(false)}
+            onOk={handleConfirm}
+            okText={
+              selectedAction === "quote"
+                ? "Send Quote Request"
+                : "Confirm Reservation"
+            }
+            confirmLoading={
+              quoteMutation.isLoading || reserveMutation.isLoading
+            }
+            okButtonProps={{
+              disabled: !email?.trim() || !phoneNo?.trim(), // enable only when filled
+            }}
+            width={380} // compact width (mobile-friendly)
+            bodyStyle={{ paddingTop: 10, paddingBottom: 10 }}
+          >
+            <Space direction="vertical" style={{ width: "100%" }} size="small">
+              {/* Short intro */}
+              <Text style={{ fontSize: 14 }}>
+                Just a few details & we’ll connect shortly.
+              </Text>
+
+              {/* Form */}
+              <Form layout="vertical" style={{ marginBottom: 0 }}>
+                <Form.Item
+                  required
+                  style={{ marginBottom: 12 }} // reduced gap
+                >
+                  <Input
+                    size="middle"
+                    value={email || ""}
+                    prefix={<MailOutlined style={{ fontSize: 14 }} />}
+                    placeholder="Enter your email"
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={!!userDetails?.email}
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  required
+                  style={{ marginBottom: 10 }} // reduced gap
+                >
+                  <Input
+                    size="middle"
+                    prefix={<WhatsAppOutlined style={{ fontSize: 14 }} />}
+                    placeholder="WhatsApp number (+91…)"
+                    value={phoneNo || ""}
+                    onChange={(e) => setPhoneNo(e.target.value)}
+                    maxLength={15}
+                    disabled={!!userDetails?.phoneNo}
+                  />
+                </Form.Item>
+              </Form>
+
+              {/* Privacy Note */}
+              <Alert
+                type="info"
+                showIcon
+                message="We respect your privacy"
+                style={{
+                  fontSize: 11,
+                  borderRadius: 6,
+                  padding: "6px 10px",
+                }}
+                description={
+                  <div style={{ fontSize: 12, lineHeight: 1.3 }}>
+                    • No spam calls or emails.
+                    <br />• Stored securely with Google Firebase encryption.
+                  </div>
+                }
+              />
+
+              <Text type="secondary" style={{ fontSize: 11, marginTop: -6 }}>
+                By continuing, you agree to be contacted by our team for this
+                enquiry. You can ask us to delete your data anytime.
+              </Text>
+            </Space>
+          </Modal>
         </div>
-      </Modal>
-    </div>
+      ) : (
+        <div style={{ padding: 16, minHeight: "90vh", paddingTop: "45vh" }}>
+          <Row justify="center">
+            <Spin size="large" />
+          </Row>
+        </div>
+      )}
+    </>
   );
 }

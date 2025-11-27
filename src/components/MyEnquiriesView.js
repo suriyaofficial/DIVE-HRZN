@@ -1,9 +1,22 @@
 import React from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Row, Col, Card, Tag, Space, Spin, Empty } from "antd";
+import {
+  Row,
+  Col,
+  Card,
+  Tag,
+  Space,
+  Spin,
+  Empty,
+  Button,
+  Badge,
+  Segmented,
+  Radio,
+} from "antd";
 import { useNavigate } from "react-router-dom";
 import { getallENQ } from "../services/api";
 import dayjs from "dayjs";
+import Title from "antd/es/typography/Title";
 
 const STATUS_COLORS = {
   Created: "blue",
@@ -15,49 +28,189 @@ const STATUS_COLORS = {
   "Service Canceled": "red",
 };
 
-const DEAL_COLORS = {
-  open: "orange",
-  closed: "green",
-};
-
 function MyEnquiriesView() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [dealFilter, setDealFilter] = React.useState("open"); // "all" | "open"
 
   const userDetails = queryClient.getQueryData(["myDetails"]);
 
-  console.log("userDetails", userDetails);
+  const email = userDetails?.email || null;
 
-  const allEnquiries = userDetails.enquiries;
+  // Fetch all enquiries for this email (then filter by IDs)
+  // Call the hook unconditionally; enable it only when email exists.
+  const { data: myEnquiries = [], isLoading } = useQuery({
+    queryKey: ["myEnquiriesList", email, dealFilter],
+    enabled: !!email,
+    refetchOnWindowFocus: false,
+    queryFn: async () => {
+      if (!email) return [];
+      const params = new URLSearchParams();
+      if (dealFilter) {
+        console.log("dealFilter", dealFilter);
 
-  if (!allEnquiries || allEnquiries.length === 0) {
+        let deal = dealFilter.toString();
+        console.log("deal", deal);
+        params.append("deal", deal);
+      }
+      params.append("q", email);
+
+      const queryString = `?${params.toString()}`;
+      const res = await getallENQ(queryString);
+      return res?.enquiries || [];
+    },
+  });
+
+  if (!userDetails) {
+    return (
+      <Row justify="center" style={{ padding: 24 }}>
+        <Spin />
+      </Row>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <Row justify="center" style={{ padding: 24 }}>
+        <Spin />
+      </Row>
+    );
+  }
+
+  if (!isLoading && myEnquiries.length === 0) {
     return (
       <Row justify="center" style={{ padding: 24 }}>
         <Col>
-          <Empty description="You don't have any enquiries yet." />
+          <Empty description="No matching enquiries found." />
         </Col>
       </Row>
     );
   }
 
   return (
-    <div style={{ padding: 16 }}>
-      <h2 style={{ marginBottom: 16 }}>My enquiries</h2>
-      <Row gutter={[16, 16]}>
-        {allEnquiries.map((enqNo) => {
-          return (
-            <Col key={enqNo} xs={8} sm={12} md={4} lg={4}>
-              <Card
-                size="small"
-                hoverable
-                onClick={() => navigate(`/my-enquiries/${enqNo}`)}
-                style={{ height: "100%" }}
-              >
-               {enqNo}
-              </Card>
-            </Col>
-          );
-        })}
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#f5f5f5",
+        padding: 16,
+      }}
+    >
+      <Space
+        wrap
+        style={{
+          width: "100%",
+          justifyContent: "center",
+          marginBottom:10
+        }}
+      >
+        <Radio.Group
+          onChange={(e) => setDealFilter(e.target.value)}
+          value={dealFilter}
+        >
+          <Radio.Button value="closed">Closed</Radio.Button>
+          <Radio.Button value="open">Open</Radio.Button>
+        </Radio.Group>
+      </Space>
+      <Row justify="center">
+        <Col xs={24} md={20} lg={18}>
+          <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+            {myEnquiries.map((enq) => {
+              const statusColor = STATUS_COLORS[enq.status] || "default";
+              return (
+                <>
+                  <Badge.Ribbon text={enq.status} color={statusColor}>
+                    <Card
+                      size="small"
+                      key={enq.enqNo}
+                      hoverable
+                      style={{
+                        borderRadius: 12,
+                        boxShadow: "0 4px 12px rgba(15, 23, 42, 0.08)",
+                      }}
+                      bodyStyle={{ padding: 16 }}
+                      onClick={() => navigate(`/my-enquiries/${enq.enqNo}`)}
+                    >
+                      <Space
+                        direction="vertical"
+                        // size={8}
+                        style={{ width: "100%" }}
+                      >
+                        {/* Top row: title + tags (like Amazon order header) */}
+                        <Row
+                          align="middle"
+                          justify="space-between"
+                          style={{ rowGap: 4 }}
+                        >
+                          <Col xs={24} sm={12} md={8}>
+                            <div
+                              style={{
+                                fontSize: 12,
+                                color: "rgba(0,0,0,0.45)",
+                              }}
+                            >
+                              Enquiry ID
+                            </div>
+                            <div style={{ fontSize: 14, fontWeight: 500 }}>
+                              {enq.enqNo}
+                            </div>
+                          </Col>
+                          <Col xs={24} md={16}>
+                            <div
+                              style={{
+                                fontSize: 16,
+                                fontWeight: 600,
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {enq.title}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: 12,
+                                color: "rgba(0,0,0,0.45)",
+                                marginTop: 2,
+                              }}
+                            >
+                              {enq.sku}
+                            </div>
+                          </Col>
+                        </Row>
+
+                        {/* Middle row: enquiry meta (like Amazon "Ordered on", "Order ID") */}
+
+                        {/* Bottom row: group size + CTA */}
+                        <Row
+                          align="middle"
+                          justify="end"
+                          style={{ marginTop: 4 }}
+                        >
+                          <Col
+                            xs={24}
+                            sm={12}
+                            style={{ textAlign: "right", marginTop: 8 }}
+                          >
+                            <Button
+                              type="link"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/my-enquiries/${enq.enqNo}`);
+                              }}
+                              style={{ padding: 0, fontSize: 14 }}
+                            >
+                              View enquiry details &raquo;
+                            </Button>
+                          </Col>
+                        </Row>
+                      </Space>
+                    </Card>
+                  </Badge.Ribbon>
+                </>
+              );
+            })}
+          </Space>
+        </Col>
       </Row>
     </div>
   );
