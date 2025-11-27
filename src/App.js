@@ -12,6 +12,7 @@ import About from "./pages/About";
 import Detail from "./pages/Detail";
 import Profile from "./pages/Profile";
 import EnquiryDashboard from "./pages/EnquiryDashboard";
+import EnquiryDetails from "./pages/EnquiryDetails";
 import MyEnquiriesView from "./components/MyEnquiriesView";
 import EnquiryDetailsPage from "./components/EnquiryDetailsPage";
 function App() {
@@ -31,10 +32,9 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/my-enquiries" element={<MyEnquiriesView />} />
             <Route path="/my-enquiries/:enqNo" element={<EnquiryDetailsPage />} />
-            <Route
-              path="/admin/enquiry/dashboard"
-              element={<EnquiryDashboard />}
-            />
+           <Route path="/admin/enquiries" element={<EnquiryDashboard />} />
+<Route path="/admin/enquiries/:enqNo" element={<EnquiryDetails />} />
+
             {/* <Route path="/contact" element={<Scuba />} /> */}
             {/* <Route path="/wander" element={<ActiveWander />} />
               <Route path="/wander/active/wander" element={<ActiveWander />} />

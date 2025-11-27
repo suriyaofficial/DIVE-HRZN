@@ -26,6 +26,8 @@ import {
   UserOutlined,
   GoogleOutlined,
   PhoneOutlined,
+  FileSearchOutlined,
+  DashboardOutlined,
 } from "@ant-design/icons";
 import {
   getAuth,
@@ -264,10 +266,21 @@ const Navbar = () => {
       <Menu.Item key="profile" onClick={() => navigate("/profile")}>
         <UserOutlined /> Profile
       </Menu.Item>
+
       <Menu.Item key="myEnquiries" onClick={() => navigate("/my-enquiries")}>
-        <UserOutlined /> My enquiries
+        <FileSearchOutlined /> My Enquiries
       </Menu.Item>
-      <Menu.Item key="logout" onClick={logout}>
+
+      {userDetails?.role === "admin" && (
+        <Menu.Item
+          key="admindashboard"
+          onClick={() => navigate("/admin/enquiries")}
+        >
+          <DashboardOutlined /> Admin Dashboard
+        </Menu.Item>
+      )}
+
+      <Menu.Item key="logout" onClick={logout} danger>
         <LogoutOutlined /> Logout
       </Menu.Item>
     </Menu>
@@ -431,6 +444,10 @@ const Navbar = () => {
                   navigate("/my-enquiries");
                   closeDrawer();
                 }
+                if (key === "admindashboard") {
+                  navigate("/admin/enquiries");
+                  closeDrawer();
+                }
                 if (key === "logout") {
                   logout();
                   closeDrawer();
@@ -447,6 +464,15 @@ const Navbar = () => {
                   icon: <UserOutlined />,
                   label: "My Enquiries",
                 },
+                ...(userDetails?.role === "admin"
+                  ? [
+                      {
+                        key: "admindashboard",
+                        icon: <UserOutlined />,
+                        label: "Admin Dashboard",
+                      },
+                    ]
+                  : []),
                 {
                   key: "logout",
                   icon: <LogoutOutlined style={{ color: "red" }} />,

@@ -52,7 +52,7 @@ export default function Detail() {
   const isLoggedIn = !!userDetails?.email;
 
   const tagProps = {
-    available: { color: "green", text: "Available" },
+    "available": { color: "green", text: "Available" },
     "coming soon": { color: "orange", text: "Coming soon" },
     "sold out": { color: "red", text: "Sold out" },
   };
@@ -95,7 +95,7 @@ export default function Detail() {
 
   const handleConfirm = (values) => {
     const payload = {
-      sku,
+      sku:data.SKU,
       title: data?.title,
       email: email,
       phoneNo: phoneNo,
@@ -189,7 +189,7 @@ export default function Detail() {
 
   return (
     <>
-      {isLoading ? (
+      {!isLoading ? (
         <div style={{ padding: 24 }}>
           <Row gutter={[24, 24]}>
             <Col xs={24} md={10} lg={8}>
@@ -248,7 +248,7 @@ export default function Detail() {
                   </div>
                 )}
               </Card>
-              <Badge.Ribbon text={tag.text} color={tag.color}>
+              <Badge.Ribbon text={tag?.text} color={tag?.color}>
                 <Card style={{ marginTop: 16 }}>
                   <div
                     style={{
@@ -353,7 +353,7 @@ export default function Detail() {
                           type="primary"
                           onClick={() => handleActionClick("reserve")}
                           loading={reserveMutation.isLoading}
-                          disabled={tag.text === "Sold out"}
+                          disabled={tag?.text === "Sold out"}
                         >
                           Reserve the Seat
                         </Button>

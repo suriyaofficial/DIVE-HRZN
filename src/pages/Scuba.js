@@ -32,7 +32,7 @@ function Scuba() {
 
   return (
     <>
-      {isLoading ? (
+      {!isLoading ? (
         <div style={{ padding: 16, minHeight: "90vh" }}>
           <Row justify="center" align="middle" >
             <Flex vertical style={{ marginBottom: 16, marginTop: 16 }}>
