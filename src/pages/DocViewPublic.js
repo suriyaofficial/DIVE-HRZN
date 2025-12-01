@@ -11,7 +11,7 @@ function DocViewPublic() {
   const [emailInput, setEmailInput] = useState("");
   const [error, setError] = useState("");
   const [messageApi, contextHolder] = message.useMessage();
-  const BASE_URL = process.env.REACT_APP_BASE_URL;
+  const BASE_URL = process.env.BASE_URL;
 
   const enquiryMutation = useMutation({
     mutationFn: async ({ enqId, email }) => {
