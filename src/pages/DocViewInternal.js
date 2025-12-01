@@ -7,7 +7,7 @@ import { getallENQ } from "../services/api";
 function DocViewInternal() {
   const { kind, enqNo, email } = useParams();
   const [messageApi, contextHolder] = message.useMessage();
-  const BASE_URL = process.env.REACT_APP_BASE_URL;
+  const BASE_URL = process.env.BASE_URL;
   const {
     data: enquiryDetail,
     isLoading,

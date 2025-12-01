@@ -90,8 +90,8 @@ export default function EnquiryDetails() {
   const queryClient = useQueryClient();
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
-  const BASE_URL = process.env.REACT_APP_BASE_URL;
-  const FRONTEND_URL = process.env.REACT_APP_BASE_URL;
+  const BASE_URL = process.env.BASE_URL;
+  const FRONTEND_URL = process.env.FRONTEND_URL;
 
   // Fetch single enquiry by enqNo
   const { data, isLoading } = useQuery({
