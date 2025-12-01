@@ -24,6 +24,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { getallENQ, updateEnquiry } from "../services/api";
+import { BASE_URL, FRONTEND_URL } from "../common";
 
 const STATUS_OPTIONS = [
   "Created",
@@ -90,8 +91,8 @@ export default function EnquiryDetails() {
   const queryClient = useQueryClient();
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
-  const BASE_URL = process.env.BASE_URL;
-  const FRONTEND_URL = process.env.FRONTEND_URL;
+  // const BASE_URL = process.env.BASE_URL;
+  // const FRONTEND_URL = process.env.FRONTEND_URL;
 
   // Fetch single enquiry by enqNo
   const { data, isLoading } = useQuery({

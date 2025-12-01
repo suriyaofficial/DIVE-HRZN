@@ -1,7 +1,6 @@
 import axios from "axios";
-
-const BASE_URL = process.env.BASE_URL;
-
+import {BASE_URL} from "../common.ts"
+// const BASE_URL = process.env.BASE_URL;
 export async function getMyDetails(email) {
   const requestUrl = `${BASE_URL}/my/details/${email}`;
   try {

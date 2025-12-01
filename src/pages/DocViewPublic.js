@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { message } from "antd";
+import {BASE_URL} from "../common.ts"
 
 import { getallENQ } from "../services/api.js";
 import EmailVerifyCard from "../components/EmailVerifyCard";
@@ -11,7 +12,7 @@ function DocViewPublic() {
   const [emailInput, setEmailInput] = useState("");
   const [error, setError] = useState("");
   const [messageApi, contextHolder] = message.useMessage();
-  const BASE_URL = process.env.BASE_URL;
+  // const BASE_URL = process.env.BASE_URL;
 
   const enquiryMutation = useMutation({
     mutationFn: async ({ enqId, email }) => {
