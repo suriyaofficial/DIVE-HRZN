@@ -90,6 +90,8 @@ export default function EnquiryDetails() {
   const queryClient = useQueryClient();
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
+  const BASE_URL = process.env.REACT_APP_BASE_URL;
+  const FRONTEND_URL = process.env.REACT_APP_BASE_URL;
 
   // Fetch single enquiry by enqNo
   const { data, isLoading } = useQuery({
@@ -222,6 +224,12 @@ export default function EnquiryDetails() {
 
   const handleOpenLink = (url) => {
     if (!url) return;
+
+    // If URL contains /pay → replace base URL
+    if (url.includes("/pay")) {
+      url = url.replace(FRONTEND_URL, BASE_URL);
+    }
+
     window.open(url, "_blank", "noopener,noreferrer");
   };
 

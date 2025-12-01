@@ -1,5 +1,6 @@
 import axios from "axios";
-import { BASE_URL } from "../common.ts";
+
+const BASE_URL = process.env.REACT_APP_BASE_URL;
 
 export async function getMyDetails(email) {
   const requestUrl = `${BASE_URL}/my/details/${email}`;
@@ -73,7 +74,7 @@ export const getallENQ = async (queryString = "") => {
 };
 export const updateEnquiry = async (enqId, updates) => {
   let requestUrl = `${BASE_URL}/enquiries/update/${enqId}`;
-  const res = await axios.post(requestUrl,updates);
+  const res = await axios.post(requestUrl, updates);
   return res.data;
 };
 
