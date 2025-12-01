@@ -3,11 +3,12 @@ import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Empty, message, Row, Spin } from "antd";
 import { getallENQ } from "../services/api";
+import { BASE_URL } from "../common.ts";
 
 function DocViewInternal() {
   const { kind, enqNo, email } = useParams();
   const [messageApi, contextHolder] = message.useMessage();
-  const BASE_URL = process.env.BASE_URL;
+  // const BASE_URL = process.env.BASE_URL;
   const {
     data: enquiryDetail,
     isLoading,
