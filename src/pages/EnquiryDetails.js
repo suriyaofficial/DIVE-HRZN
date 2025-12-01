@@ -24,7 +24,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { getallENQ, updateEnquiry } from "../services/api";
-import { BASE_URL, FRONTEND_URL } from "../common";
+import { BASE_URL, FRONTEND_URL } from "../common.ts";
 
 const STATUS_OPTIONS = [
   "Created",
