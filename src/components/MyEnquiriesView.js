@@ -1,22 +1,8 @@
 import React from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Row,
-  Col,
-  Card,
-  Tag,
-  Space,
-  Spin,
-  Empty,
-  Button,
-  Badge,
-  Segmented,
-  Radio,
-} from "antd";
+import { Row, Col, Card, Space, Spin, Empty, Button, Badge, Radio } from "antd";
 import { useNavigate } from "react-router-dom";
 import { getallENQ } from "../services/api";
-import dayjs from "dayjs";
-import Title from "antd/es/typography/Title";
 
 const STATUS_COLORS = {
   Created: "blue",
@@ -37,8 +23,6 @@ function MyEnquiriesView() {
 
   const email = userDetails?.email || null;
 
-  // Fetch all enquiries for this email (then filter by IDs)
-  // Call the hook unconditionally; enable it only when email exists.
   const { data: myEnquiries = [], isLoading } = useQuery({
     queryKey: ["myEnquiriesList", email, dealFilter],
     enabled: !!email,
@@ -47,10 +31,7 @@ function MyEnquiriesView() {
       if (!email) return [];
       const params = new URLSearchParams();
       if (dealFilter) {
-        console.log("dealFilter", dealFilter);
-
         let deal = dealFilter.toString();
-        console.log("deal", deal);
         params.append("deal", deal);
       }
       params.append("q", email);
@@ -100,7 +81,7 @@ function MyEnquiriesView() {
         style={{
           width: "100%",
           justifyContent: "center",
-          marginBottom:10
+          marginBottom: 10,
         }}
       >
         <Radio.Group
@@ -128,14 +109,11 @@ function MyEnquiriesView() {
                         boxShadow: "0 4px 12px rgba(15, 23, 42, 0.08)",
                       }}
                       bodyStyle={{ padding: 16 }}
-                      onClick={() => navigate(`/my-enquiries/${enq.enqNo}`)}
+                      onClick={() =>
+                        navigate(`/my-enquiries/${enq.enqNo}/${email}`)
+                      }
                     >
-                      <Space
-                        direction="vertical"
-                        // size={8}
-                        style={{ width: "100%" }}
-                      >
-                        {/* Top row: title + tags (like Amazon order header) */}
+                      <Space direction="vertical" style={{ width: "100%" }}>
                         <Row
                           align="middle"
                           justify="space-between"
@@ -178,9 +156,6 @@ function MyEnquiriesView() {
                           </Col>
                         </Row>
 
-                        {/* Middle row: enquiry meta (like Amazon "Ordered on", "Order ID") */}
-
-                        {/* Bottom row: group size + CTA */}
                         <Row
                           align="middle"
                           justify="end"
@@ -195,7 +170,7 @@ function MyEnquiriesView() {
                               type="link"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/my-enquiries/${enq.enqNo}`);
+                                navigate(`/my-enquiries/${enq.enqNo}/${email}`);
                               }}
                               style={{ padding: 0, fontSize: 14 }}
                             >

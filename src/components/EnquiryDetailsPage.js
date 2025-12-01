@@ -1,14 +1,12 @@
 // src/pages/EnquiryDetailsPage.jsx
-import React from "react";
 import { Row, Col, Card, Badge, Tag, Space, Button, Spin } from "antd";
 import {
   CreditCardOutlined,
   LeftOutlined,
   LinkOutlined,
-  StepBackwardOutlined,
 } from "@ant-design/icons";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getallENQ } from "../services/api";
 import dayjs from "dayjs";
 
@@ -31,11 +29,6 @@ const PAYMENT_COLORS = {
   "": "default",
 };
 
-const DEAL_COLORS = {
-  open: "orange",
-  closed: "green",
-};
-
 const tsToDate = (ts) => {
   if (!ts || !ts.seconds) return null;
   const ms = ts.seconds * 1000 + (ts.nanoseconds || 0) / 1e6;
@@ -43,17 +36,15 @@ const tsToDate = (ts) => {
 };
 
 export default function EnquiryDetailsPage() {
-  const { enqNo } = useParams();
-  console.log("enqNo", enqNo);
+  const { enqNo, email } = useParams();
   let ENQ_ID = enqNo;
   const navigate = useNavigate();
-
   const { data, isLoading } = useQuery({
     queryKey: ["myEnquiryDetails", ENQ_ID],
     enabled: !!ENQ_ID,
     refetchOnWindowFocus: false,
     queryFn: async () => {
-      const res = await getallENQ(`?id=${ENQ_ID}`);
+      const res = await getallENQ(`?id=${ENQ_ID}&email=${email}`);
       return res?.enquiries?.[0];
     },
   });
@@ -65,19 +56,13 @@ export default function EnquiryDetailsPage() {
     ? tsToDate(enquiry.preferredDate)
     : null;
 
-  const deal = enquiry?.deal || "open";
-  const dealColor = DEAL_COLORS[deal] || "orange";
-  const dealLabel = deal === "closed" ? "Deal Closed" : "Deal Open";
-
   const paymentStatus = enquiry?.paymentStatus || "Null";
   const paymentColor = PAYMENT_COLORS[paymentStatus] || "default";
   const statusColor = STATUS_COLORS[enquiry?.status || "Created"] || "default";
 
   const handleOpenLink = (link) => {
-    console.log("link", link);
-
     if (!link) return;
-    window.open(link, "_blank", "noopener,noreferrer");
+    window.open(`${link}/${email}`, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -98,7 +83,6 @@ export default function EnquiryDetailsPage() {
 
                   {enquiry?.enqNo}
                 </>
-                //   extra={
               }
               style={{
                 borderRadius: 16,
