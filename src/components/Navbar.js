@@ -9,7 +9,6 @@ import {
   Drawer,
   Divider,
   Modal,
-  Form,
   Input,
   message,
   Avatar,
@@ -17,8 +16,6 @@ import {
   Menu,
   Space,
   Grid,
-  Select,
-  Tabs,
 } from "antd";
 import {
   MenuOutlined,
@@ -34,11 +31,10 @@ import {
   signOut,
   signInWithPopup,
   GoogleAuthProvider,
-  updateProfile,
 } from "firebase/auth";
 import { useLocation } from "react-router-dom";
 import AuthTabsModal from "./AuthTabsModal";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getMyDetails,
   loginWithGoogle,
@@ -58,18 +54,11 @@ const Navbar = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState(() => {
-    try {
-      return Cookies.get("user");
-    } catch {
-      return null;
-    }
-  });
-
-  // 👉 new state
   const [phoneModalOpen, setPhoneModalOpen] = useState(false);
   const [phone, setPhone] = useState("+91");
   const [pendingUser, setPendingUser] = useState(null); // user from backend without phone
+  const queryClient = useQueryClient();
+  const accessToken = Cookies.get("token");
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -83,10 +72,10 @@ const Navbar = () => {
   const { data: userDetails } = useQuery({
     queryKey: ["myDetails"],
     queryFn: async () => {
-      const response = await getMyDetails(user);
+      const response = await getMyDetails(accessToken);
       return response.data;
     },
-    enabled: !!user,
+    enabled: !!accessToken,
     refetchOnWindowFocus: false,
   });
 
@@ -103,15 +92,16 @@ const Navbar = () => {
     mutationFn: loginWithGoogle,
     onSuccess: (data) => {
       const userData = data.data;
+      const backendToken = data.token; // save this for later
 
-      // ✅ If phone already exists -> directly complete login
       if (userData.phoneNo) {
-        completeLogin(userData);
+        // Has phone — finish login now
+        completeLogin(userData, backendToken);
         return;
       }
 
-      // ❌ Phone missing -> ask for it
-      setPendingUser(userData);
+      // Missing phone: wait for phone update mutation
+      setPendingUser({ ...userData, token: backendToken });
       setPhone("+91"); // default prefix
       setAuthModalOpen(false); // close auth tabs modal
       setPhoneModalOpen(true); // open phone modal
@@ -129,14 +119,14 @@ const Navbar = () => {
   const updatePhoneMutation = useMutation({
     mutationFn: updatePhoneNumber,
     onSuccess: (data, variables) => {
-      // variables = { email, phoneNo }
       const updatedUser = {
         ...pendingUser,
         phoneNo: variables.phoneNo,
       };
       setPhoneModalOpen(false);
       setPendingUser(null);
-      completeLogin(updatedUser); // finish login flow
+      completeLogin(updatedUser, updatedUser.token); // finish login flow
+      queryClient.invalidateQueries(["myDetails"]);
     },
     onError: (error) => {
       console.error("Phone update failed", error);
@@ -148,14 +138,14 @@ const Navbar = () => {
     },
   });
 
-  const completeLogin = (userData) => {
-    Cookies.set("user", userData.email, {
-      expires: 1, // 1 day
-      secure: true,
-      sameSite: "Strict",
-    });
-
-    setUser(userData.email);
+  const completeLogin = (userData, token) => {
+    if (token) {
+      Cookies.set("token", token, {
+        expires: 1,
+        secure: true,
+        sameSite: "Strict",
+      });
+    }
     message.success("Successfully signed in!");
     setAuthModalOpen(false); // close modal
     setLoading(false);
@@ -209,34 +199,18 @@ const Navbar = () => {
 
     setLoading(true);
     updatePhoneMutation.mutate({
-      email: pendingUser.email,
       phoneNo: phone,
+      token: pendingUser.token, // 👈 use backend token here
     });
   };
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      const res = await signInWithPopup(auth, provider);
-      console.log("res", res);
-
-      const u = res.user; // Firebase user
-      const names = u.displayName ? u.displayName.split(" ") : ["", ""];
-      const firstName = names[0];
-      const lastName = names.slice(1).join(" ") || "";
-
-      const payload = {
-        email: u.email,
-        firstName: firstName,
-        lastName: lastName,
-        profileImage:
-          u.profileImage ||
-          u.photoURL ||
-          res._tokenResponse?.photoUrl || // fallback from Google OAuth response
-          null,
-      };
-
-      loginMutation.mutate(payload);
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      const idToken = await user.getIdToken();
+      loginMutation.mutate(idToken);
     } catch (err) {
       console.error(err);
       message.error(err.message || "Google sign-in failed");
@@ -250,8 +224,7 @@ const Navbar = () => {
     } catch (e) {
       console.warn(e);
     }
-    Cookies.remove("user");
-    setUser(null);
+    Cookies.remove("token");
     message.success("Logged out");
     navigate("/");
     window.location.reload();
@@ -348,7 +321,7 @@ const Navbar = () => {
                   </Col>
                 ))}
 
-                {!user ? (
+                {!userDetails ? (
                   <>
                     <Col>
                       <Button onClick={() => openAuthModal("signin")}>
@@ -421,7 +394,7 @@ const Navbar = () => {
 
           <Divider />
 
-          {!user ? (
+          {!userDetails ? (
             <Button
               block
               type="primary"
@@ -487,10 +460,12 @@ const Navbar = () => {
         title="Add your phone number"
         open={phoneModalOpen}
         onOk={handlePhoneSubmit}
+        maskClosable={false}
         onCancel={() => {
           setPhoneModalOpen(false);
           setPendingUser(null);
           setLoading(false);
+          Cookies.remove("token");
         }}
         confirmLoading={updatePhoneMutation.isPending || loading}
         okText="Continue"
