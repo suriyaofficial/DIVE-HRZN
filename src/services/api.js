@@ -1,12 +1,16 @@
 import axios from "axios";
-import {BASE_URL} from "../common.ts"
+import { BASE_URL } from "../common.ts";
 // const BASE_URL = process.env.BASE_URL;
-export async function getMyDetails(email) {
-  const requestUrl = `${BASE_URL}/my/details/${email}`;
+export async function getMyDetails(accessToken) {
+  const requestUrl = `${BASE_URL}/my/details`;
   try {
     // console.log("requestUrl", requestUrl);
-    const response = await axios.get(requestUrl);
-    // console.log("getMyDetails api response", response);
+    const response = await axios.get(requestUrl, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    // console.log("getMyDetails api response", rponse);
     return response.data;
   } catch (err) {}
 }
@@ -46,22 +50,40 @@ export async function postReserve(body) {
     return response;
   } catch (err) {}
 }
-export const loginWithGoogle = async (userData) => {
+export const loginWithGoogle = async (idToken) => {
   try {
-    let requestUrl = `${BASE_URL}/auth/google-login`;
-    // userData: { email, firstName, lastName, photoURL }
-    const response = await axios.post(requestUrl, userData);
+    const requestUrl = `${BASE_URL}/auth/google-login`;
+    const response = await axios.post(
+      requestUrl,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${idToken}`, // 👈 send as Bearer token
+        },
+      }
+    );
     return response.data;
-  } catch (err) {}
+  } catch (err) {
+    console.error("Google login API error:", err);
+    throw err;
+  }
 };
 
-export const updatePhoneNumber = async (data) => {
+export const updatePhoneNumber = async ({ phoneNo, token }) => {
   try {
     // console.log("data", data);
 
     let requestUrl = `${BASE_URL}/auth/update-phone`;
     // data: { email, phone }
-    const response = await axios.post(requestUrl, data);
+    const response = await axios.post(
+      requestUrl,
+      { phoneNo },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
     return response.data;
   } catch (err) {}
 };
