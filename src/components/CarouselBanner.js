@@ -1,19 +1,34 @@
-import { Carousel } from "antd";
-
-const images = [
-  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&q=80",
-  "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1600&q=80",
-  "https://images.unsplash.com/photo-1526772662000-3f88f10405ff?w=1600&q=80",
-  "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1600&q=80",
-  "https://images.unsplash.com/photo-1493558103817-58b2924bce98?w=1600&q=80",
-];
+import { Carousel, Spin } from "antd";
+import { useQuery } from "@tanstack/react-query";
+import { getHomepageBanner } from "../services/api";
 
 const CarouselBanner = () => {
+  const {
+    data: images,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["homepagebanner"],
+    queryFn: getHomepageBanner,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[90vh]">
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (isError || !images || images.length === 0) {
+    return <p className="text-center text-red-600">Failed to load banner</p>;
+  }
+
   return (
     <Carousel
       arrows
-      infinite={true}
-      autoplay={{ dotDuration: true }}
+      infinite
+      autoplay
       autoplaySpeed={3000}
       dots
       effect="scrollx"
@@ -26,7 +41,8 @@ const CarouselBanner = () => {
             style={{
               margin: 0,
               height: "90vh",
-              width: "100vw",
+              width: "100%",
+              objectFit: "cover",
             }}
           />
         </div>

@@ -42,17 +42,18 @@ export default function ServiceDetail() {
   const [modalOpen, setModalOpen] = useState(false);
   const [openCards, setOpenCards] = useState(true);
   let getuser = queryClient.getQueryData(["myDetails"]);
-  const { data:user } = useQuery({
-      queryKey: ["myDetails"],
-      queryFn: async () => {
-        const response = await getMyDetails(accessToken);
-        return response.data;
-      },
-      enabled: !!accessToken&&!getuser,
-      refetchOnWindowFocus: false,
-    });
-   const userDetails=getuser?getuser:user;
+  const { data: user } = useQuery({
+    queryKey: ["myDetails"],
+    queryFn: async () => {
+      const response = await getMyDetails(accessToken);
+      return response.data;
+    },
+    enabled: !!accessToken && !getuser,
+    refetchOnWindowFocus: false,
+  });
+  const userDetails = getuser ? getuser : user;
   const [email, setEmail] = useState(userDetails?.email || null);
+  const [loading, setLoading] = useState( null);
   const [phoneNo, setPhoneNo] = useState(userDetails?.phoneNo || "+91");
   const navigate = useNavigate();
   const location = useLocation();
@@ -76,6 +77,8 @@ export default function ServiceDetail() {
   const quoteMutation = useMutation({
     mutationFn: (payload) => postQuote(payload, accessToken),
     onSuccess: (data) => {
+      setLoading(false);
+
       message.success("Quote request sent! We will contact you soon.");
       queryClient.invalidateQueries(["detail", sku]);
       queryClient.invalidateQueries(["myDetails"]);
@@ -95,7 +98,7 @@ export default function ServiceDetail() {
       name: `${userDetails?.firstName} ${userDetails?.lastName}`,
       initiatedDate: new Date().toISOString().split("T")[0],
     };
-
+    setLoading(true);
     quoteMutation.mutate(payload);
   };
 
@@ -339,7 +342,7 @@ export default function ServiceDetail() {
                       <Button
                         type="primary"
                         onClick={() => handleActionClick("quote")}
-                        loading={quoteMutation.isLoading}
+                        loading={loading || quoteMutation.isLoading}
                         disabled={tag?.text === "Sold out"}
                       >
                         Get Quote
@@ -348,6 +351,7 @@ export default function ServiceDetail() {
                   ) : (
                     <Button
                       type="primary"
+                      loading={loading || quoteMutation.isLoading}
                       onClick={() => handleActionClick("quote")}
                     >
                       Sign In to Continue
@@ -384,7 +388,7 @@ export default function ServiceDetail() {
             onCancel={() => setModalOpen(false)}
             onOk={handleConfirm}
             okText={"Send Quote Request"}
-            confirmLoading={quoteMutation.isLoading}
+            confirmLoading={loading || quoteMutation.isLoading}
             okButtonProps={{
               disabled: !email?.trim() || !phoneNo?.trim(), // enable only when filled
             }}

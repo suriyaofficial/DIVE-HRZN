@@ -2,17 +2,18 @@ import { initializeApp } from "firebase/app";
 import { getFirestore } from "@firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
+import { getAnalytics } from "firebase/analytics";
 const firebaseConfig = {
-  apiKey: "AIzaSyBXnnHa76PfoUrV1OwqHPvR4oIp_X8uYzA",
-  authDomain: "feedback-b9813.firebaseapp.com",
-  projectId: "feedback-b9813",
-  storageBucket: "feedback-b9813.firebasestorage.app",
-  messagingSenderId: "140148221702",
-  appId: "1:140148221702:web:eee4ff01789fc406586087",
-  measurementId: "G-5WE8MBZTHQ"
+  apiKey: "AIzaSyCCZz1jPYNEKpXmwt0rYNPuwC5bX35n3cw",
+  authDomain: "dive--hrzn.firebaseapp.com",
+  projectId: "dive--hrzn",
+  storageBucket: "dive--hrzn.firebasestorage.app",
+  messagingSenderId: "420297137844",
+  appId: "1:420297137844:web:036fb43e0e4b253b77c1e1",
+  measurementId: "G-4MKFTQHS3S"
 };
-// Initialize Firebase
 export const app = initializeApp(firebaseConfig);
+export const analytics = getAnalytics(app);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const storage = getStorage(app);

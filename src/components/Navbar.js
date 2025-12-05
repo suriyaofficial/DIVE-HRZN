@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Cookies from "js-cookie";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { app } from "../firebaseconfig";
 import {
   Row,
@@ -32,15 +32,14 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
 } from "firebase/auth";
-import { useLocation } from "react-router-dom";
 import AuthTabsModal from "./AuthTabsModal";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getMyDetails,
   loginWithGoogle,
   updatePhoneNumber,
 } from "../services/api";
-import { useQuery } from "@tanstack/react-query";
+import divehrznLogo from "../divehrzn.svg";
 
 const { useBreakpoint } = Grid;
 
@@ -56,15 +55,14 @@ const Navbar = () => {
   const [loading, setLoading] = useState(false);
   const [phoneModalOpen, setPhoneModalOpen] = useState(false);
   const [phone, setPhone] = useState("+91");
-  const [pendingUser, setPendingUser] = useState(null); // user from backend without phone
+  const [pendingUser, setPendingUser] = useState(null);
   const queryClient = useQueryClient();
   const accessToken = Cookies.get("token");
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const auth = params.get("auth");
-
-    if (auth === "signin") {
+    const authQuery = params.get("auth");
+    if (authQuery === "signin") {
       setAuthModalOpen(true);
     }
   }, [location.search]);
@@ -82,7 +80,7 @@ const Navbar = () => {
   const openDrawer = () => setDrawerOpen(true);
   const closeDrawer = () => setDrawerOpen(false);
 
-  const openAuthModal = (mode = "signin") => {
+  const openAuthModal = () => {
     closeDrawer();
     setAuthModalOpen(true);
   };
@@ -92,19 +90,17 @@ const Navbar = () => {
     mutationFn: loginWithGoogle,
     onSuccess: (data) => {
       const userData = data.data;
-      const backendToken = data.token; // save this for later
+      const backendToken = data.token;
 
       if (userData.phoneNo) {
-        // Has phone — finish login now
         completeLogin(userData, backendToken);
         return;
       }
 
-      // Missing phone: wait for phone update mutation
       setPendingUser({ ...userData, token: backendToken });
-      setPhone("+91"); // default prefix
-      setAuthModalOpen(false); // close auth tabs modal
-      setPhoneModalOpen(true); // open phone modal
+      setPhone("+91");
+      setAuthModalOpen(false);
+      setPhoneModalOpen(true);
       setLoading(false);
     },
     onError: (error) => {
@@ -125,7 +121,7 @@ const Navbar = () => {
       };
       setPhoneModalOpen(false);
       setPendingUser(null);
-      completeLogin(updatedUser, updatedUser.token); // finish login flow
+      completeLogin(updatedUser, updatedUser.token);
       queryClient.invalidateQueries(["myDetails"]);
     },
     onError: (error) => {
@@ -147,18 +143,16 @@ const Navbar = () => {
       });
     }
     message.success("Successfully signed in!");
-    setAuthModalOpen(false); // close modal
+    setAuthModalOpen(false);
     setLoading(false);
     queryClient.invalidateQueries(["myDetails"]);
 
-    // 🔁 Handle redirect back to the page user came from
     const params = new URLSearchParams(location.search);
     const redirect = params.get("redirect");
 
     if (redirect) {
       navigate(redirect, { replace: true });
     } else {
-      // clean up ?auth=signin if present
       if (params.get("auth")) {
         params.delete("auth");
         navigate(
@@ -175,7 +169,6 @@ const Navbar = () => {
   const handlePhoneChange = (e) => {
     let value = e.target.value;
 
-    // Ensure it always starts with +91
     if (!value.startsWith("+91")) {
       value = "+91" + value.replace(/^\+?91?/, "");
     }
@@ -201,7 +194,7 @@ const Navbar = () => {
     setLoading(true);
     updatePhoneMutation.mutate({
       phoneNo: phone,
-      token: pendingUser.token, // 👈 use backend token here
+      token: pendingUser.token,
     });
   };
 
@@ -230,6 +223,7 @@ const Navbar = () => {
     navigate("/");
     window.location.reload();
   };
+
   const goto = (path) => {
     navigate(path);
     closeDrawer();
@@ -261,98 +255,231 @@ const Navbar = () => {
   );
 
   const navItems = [
-    { label: "Home", action: () => navigate("/") },
-    { label: "Scuba", action: () => navigate("/scuba") },
-    { label: "Skydive", action: () => navigate("/skydive"), disabled: true },
-    { label: "About", action: () => navigate("/about") },
+    { label: "Home", path: "/" },
+    { label: "Scuba", path: "/scuba" },
+    { label: "Skydive", path: "/skydive", disabled: true },
+    { label: "About", path: "/about" },
   ];
 
   const isMobile = !screens.md;
 
+  const isActive = (path) => {
+    if (path === "/") return location.pathname === "/";
+    return location.pathname.startsWith(path);
+  };
+
   return (
     <>
+      {/* NAV WRAPPER */}
       <div
         style={{
           position: "sticky",
           top: 0,
           zIndex: 1000,
-          background: "#fff",
-          boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+          background: "rgba(255,255,255,0.92)",
+          backdropFilter: "blur(10px)",
+          borderBottom: "1px solid #f0f0f0",
         }}
       >
         <Row
           align="middle"
           justify="space-between"
-          style={{ padding: "8px 16px", maxWidth: 1200, margin: "0 auto" }}
+          style={{
+            padding: "8px 16px",
+            maxWidth: 1200,
+            margin: "0 auto",
+          }}
         >
+          {/* LEFT: LOGO + BRAND */}
           <Col>
-            <Link to="/" style={{ display: "flex", alignItems: "center" }}>
-              <img
-                src="/logo192.png"
-                alt="logo"
+            <Link
+              to="/"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                textDecoration: "none",
+                gap: 10,
+              }}
+            >
+              <div
                 style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 8,
-                  marginRight: 8,
+                  width: 40,
+                  height: 40,
+                  borderRadius: 12,
+                  overflow: "hidden",
+                  border: "1px solid #f0f0f0",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "#fff",
                 }}
-              />
-              <div style={{ fontWeight: 700, fontSize: 18 }}>Dive Hrzn</div>
+              >
+                <img
+                  src={divehrznLogo}
+                  alt="logo"
+                  style={{
+                    width: "80%",
+                    height: "80%",
+                    objectFit: "contain",
+                  }}
+                />
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  lineHeight: 1.1,
+                }}
+              >
+                <span
+                  style={{
+                    fontWeight: 700,
+                    fontSize: 18,
+                    letterSpacing: 1.5,
+                  }}
+                >
+                  DIVE HRZN
+                </span>
+                <span
+                  style={{
+                    fontSize: 11,
+                    color: "#8c8c8c",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Scuba & Adventure
+                </span>
+              </div>
             </Link>
           </Col>
 
+          {/* RIGHT: NAV + PROFILE */}
           <Col>
             {isMobile ? (
               <Button
-                type="default"
+                type="text"
                 icon={<MenuOutlined />}
                 onClick={openDrawer}
+                style={{
+                  borderRadius: 999,
+                  border: "1px solid #e8e8e8",
+                  width: 40,
+                  height: 40,
+                }}
               />
             ) : (
-              <Row align="middle" gutter={16}>
-                {navItems.map((it) => (
-                  <Col key={it.label}>
-                    <Button
-                      type="text"
-                      disabled={it.disabled}
-                      onClick={it.action}
-                    >
-                      {it.label}
-                    </Button>
-                  </Col>
-                ))}
-
-                {!accessToken ? (
-                  <>
-                    <Col>
-                      <Button onClick={() => openAuthModal("signin")}>
-                        Sign In
+              <Row align="middle" gutter={12} wrap={false}>
+                {/* NAV LINKS */}
+                <Col>
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 4,
+                      padding: "4px 6px",
+                      borderRadius: 999,
+                      background: "#fafafa",
+                    }}
+                  >
+                    {navItems.map((it) => (
+                      <Button
+                        key={it.label}
+                        type="text"
+                        disabled={it.disabled}
+                        onClick={() => navigate(it.path)}
+                        style={{
+                          borderRadius: 999,
+                          padding: "4px 12px",
+                          fontSize: 13,
+                          fontWeight: isActive(it.path) ? 600 : 400,
+                          background: isActive(it.path)
+                            ? "#ffffff"
+                            : "transparent",
+                          boxShadow: isActive(it.path)
+                            ? "0 0 0 1px #e6f4ff"
+                            : "none",
+                        }}
+                      >
+                        {it.label}
                       </Button>
-                    </Col>
-                  </>
-                ) : (
-                  <Col>
+                    ))}
+                  </div>
+                </Col>
+
+                {/* AUTH / PROFILE */}
+                <Col>
+                  {!accessToken ? (
+                    <Button
+                      // type="primary"
+                      color="black"
+                      onClick={openAuthModal}
+                      style={{
+                        borderRadius: 999,
+                        padding: "0 18px",
+                        height: 36,
+                        fontWeight: 500,
+                      }}
+                    >
+                      Sign In
+                    </Button>
+                  ) : (
                     <Dropdown overlay={profileMenu} placement="bottomRight">
-                      <Button size="large">
-                        <Space>
-                          <Avatar src={userDetails?.profileImage}>
-                            <UserOutlined />
-                          </Avatar>
+                      <Button
+                        style={{
+                          borderRadius: 999,
+                          padding: "0 12px",
+                          height: 36,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                        }}
+                      >
+                        <Avatar
+                          size={24}
+                          src={userDetails?.profileImage}
+                          style={{ backgroundColor: "#e6f4ff" }}
+                        >
+                          <UserOutlined />
+                        </Avatar>
+                        <span
+                          style={{
+                            maxWidth: 140,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            fontSize: 13,
+                          }}
+                        >
                           {userDetails?.displayName ||
-                            userDetails?.email.split("@")[0]}
-                        </Space>
+                            userDetails?.email?.split("@")[0]}
+                        </span>
                       </Button>
                     </Dropdown>
-                  </Col>
-                )}
+                  )}
+                </Col>
               </Row>
             )}
           </Col>
         </Row>
       </div>
 
+      {/* MOBILE DRAWER */}
       <Drawer
-        title="Menu"
+        title={
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <img
+              src={divehrznLogo}
+              alt="logo"
+              style={{ width: 28, height: 28, borderRadius: 8 }}
+            />
+            <span style={{ fontWeight: 600 }}>DIVE HRZN</span>
+          </div>
+        }
         placement="left"
         onClose={closeDrawer}
         open={drawerOpen}
@@ -360,17 +487,15 @@ const Navbar = () => {
       >
         <Divider style={{ margin: 0 }} />
 
-        <div style={{ padding: "16px" }}>
-          {/* MENU ITEMS */}
+        <div style={{ padding: "12px 16px" }}>
           <Menu
             selectedKeys={[location.pathname]}
             mode="inline"
-            style={{ borderRight: 0, fontSize: "16px" }}
+            style={{ borderRight: 0, fontSize: 15 }}
             onClick={({ key }) => {
               if (key === "profile") return navigate("/profile");
               if (key === "logout") return logout();
               goto(key);
-              closeDrawer();
             }}
             items={[
               {
@@ -398,12 +523,14 @@ const Navbar = () => {
           {!accessToken ? (
             <Button
               block
-              type="primary"
+              // type="primary"
+              color="black"
               icon={<GoogleOutlined />}
               size="large"
-              onClick={() => openAuthModal("signin")}
+              onClick={openAuthModal}
+              style={{ borderRadius: 999 }}
             >
-              Sign In / Sign Up
+              Sign In
             </Button>
           ) : (
             <Menu
@@ -435,14 +562,14 @@ const Navbar = () => {
                 },
                 {
                   key: "myEnquiries",
-                  icon: <UserOutlined />,
+                  icon: <FileSearchOutlined />,
                   label: "My Enquiries",
                 },
                 ...(userDetails?.role === "admin"
                   ? [
                       {
                         key: "admindashboard",
-                        icon: <UserOutlined />,
+                        icon: <DashboardOutlined />,
                         label: "Admin Dashboard",
                       },
                     ]
@@ -457,6 +584,8 @@ const Navbar = () => {
           )}
         </div>
       </Drawer>
+
+      {/* PHONE MODAL */}
       <Modal
         title="Add your phone number"
         open={phoneModalOpen}
@@ -483,6 +612,7 @@ const Navbar = () => {
         />
       </Modal>
 
+      {/* AUTH MODAL */}
       <AuthTabsModal
         visible={authModalOpen}
         onClose={closeAuthModal}

@@ -1,6 +1,25 @@
 import axios from "axios";
 import { BASE_URL } from "../common.ts";
 // const BASE_URL = process.env.BASE_URL;
+
+export async function getAbout() {
+  const requestUrl = `${BASE_URL}/about`;
+  try {
+    // console.log("requestUrl", requestUrl);
+    const response = await axios.get(requestUrl);
+    // console.log("getMyDetails api response", rponse);
+    return response.data;
+  } catch (err) {}
+}
+export async function getHomepageBanner() {
+  const requestUrl = `${BASE_URL}/homepagebanner`;
+  try {
+    // console.log("requestUrl", requestUrl);
+    const response = await axios.get(requestUrl);
+    // console.log("getMyDetails api response", rponse);
+    return response.data.data.images || [];
+  } catch (err) {}
+}
 export async function getMyDetails(accessToken) {
   const requestUrl = `${BASE_URL}/my/details`;
   try {

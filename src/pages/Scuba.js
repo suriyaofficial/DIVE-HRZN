@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Row, Col, Empty, Flex, Radio, Spin, Space } from "antd";
+import { Row, Col, Empty, Flex, Radio, Spin, Space, Button } from "antd";
 import { useQuery } from "@tanstack/react-query";
 import DisplayCard from "../components/DisplayCard";
 import { getScuba } from "../services/api";
@@ -34,19 +34,40 @@ function Scuba() {
     <>
       {!isLoading ? (
         <div style={{ padding: 16, minHeight: "90vh" }}>
-          <Row justify="center" align="middle" >
+          <Row justify="center" align="middle">
             <Flex vertical style={{ marginBottom: 16, marginTop: 16 }}>
-              <Radio.Group
-                size="small"
-                optionType="button"
-                buttonStyle="solid"
-                value={activeTab}
-                onChange={(e) => setActiveTab(e.target.value)}
-                options={data?.category.map((cat) => ({
-                  label: cat,
-                  value: cat,
-                }))}
-              />
+              <div
+                style={{
+                  display: "flex",
+                  // gap: 2,
+                  // padding: "4px 6px",
+                  borderRadius: 999,
+                  background: "#fafafa",
+                  // flexWrap: "wrap", // so it wraps on mobile
+                }}
+              >
+                {data?.category.map((cat) => {
+                  const isActive = activeTab === cat;
+                  return (
+                    <Button
+                    size="small"
+                      key={cat}
+                      type="text"
+                      onClick={() => setActiveTab(cat)}
+                      style={{
+                        borderRadius: 999,
+                        // padding: "4px 12px",
+                        fontSize: 12,
+                        fontWeight: isActive ? 600 : 400,
+                        background: isActive ? "#ffffff" : "transparent",
+                        boxShadow: isActive ? "0 0 0 1px #e6f4ff" : "none",
+                      }}
+                    >
+                      {cat}
+                    </Button>
+                  );
+                })}
+              </div>
             </Flex>
           </Row>
 
@@ -73,7 +94,7 @@ function Scuba() {
           </div>
         </div>
       ) : (
-        <div style={{ padding: 16, minHeight: "90vh", paddingTop:'45vh' }}>
+        <div style={{ padding: 16, minHeight: "90vh", paddingTop: "45vh" }}>
           <Row justify="center">
             <Spin size="large" />
           </Row>

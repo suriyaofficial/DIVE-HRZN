@@ -1,6 +1,6 @@
-import { Modal, Button } from "antd";
+import { Modal, Button, Avatar } from "antd";
 import { GoogleOutlined } from "@ant-design/icons";
-
+import divehrznlogo from "../divehrzn.svg";
 const AuthTabsModal = ({ visible, onClose, loading, handleGoogleSignIn }) => {
   const modalWidth = 360;
 
@@ -12,7 +12,7 @@ const AuthTabsModal = ({ visible, onClose, loading, handleGoogleSignIn }) => {
       width={modalWidth}
       styles={{
         body: {
-          height: "80vh",
+          height: "40vh",
           display: "flex",
           flexDirection: "column",
           justifyContent: "flex-start",
@@ -26,8 +26,13 @@ const AuthTabsModal = ({ visible, onClose, loading, handleGoogleSignIn }) => {
       <div
         style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}
       >
+      <Avatar size={100} src={divehrznlogo} />
+      </div>
+      <div
+        style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}
+      >
         <div style={{ textAlign: "center" }}>
-          <div style={{ fontWeight: 800, fontSize: 20 }}>Dive Hrzn</div>
+          <div style={{ fontWeight: 800, fontSize: 20 }}>DIVE HRZN</div>
           <div style={{ color: "#888", fontSize: 14, marginTop: 4 }}>
             Sign in to continue
           </div>
@@ -45,11 +50,12 @@ const AuthTabsModal = ({ visible, onClose, loading, handleGoogleSignIn }) => {
       >
         <Button
           block
-          icon={<GoogleOutlined />}
+          icon={<GoogleOutlined  />}
           onClick={handleGoogleSignIn}
           loading={loading}
           size="large"
-          type="primary"
+          color="black"
+          // variant="solid"
           style={{ height: 48, fontSize: 16 }}
         >
           Continue with Google
