@@ -79,14 +79,14 @@ const HeartIcon = (props) => (
 const SectionTitle = ({ children, icon: Icon }) => (
   <div className="flex items-center space-x-3 mb-6">
     {Icon && <Icon className="w-8 h-8 text-cyan-500" />}
-    <h2 className="text-2xl md:text-2xl font-extrabold text-gray-800 border-b-4 border-cyan-500 pb-1 inline-block">
+    <h2 className="text-xl md:text-xl xs:text-s font-extrabold text-gray-800 border-b-4 border-cyan-500 pb-1 inline-block">
       {children}
     </h2>
   </div>
 );
 
 const TimelineItem = ({ period, role, isLast }) => (
-  <li className="relative mb-6 pl-8">
+  <li className="relative mb-3 pl-8">
     <div className="absolute w-4 h-4 rounded-full mt-0.5 left-[4px] border-2 border-cyan-500 bg-white shadow-md z-10" />
     {!isLast && (
       <div className="absolute h-full w-0.5 bg-gray-300 left-[11px] top-0 z-0" />
@@ -183,7 +183,7 @@ const AboutPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 font-sans p-4 md:p-8 lg:p-12">
       {/* Header Section */}
-      <header className="text-center mb-16 pt-8 pb-12 bg-white rounded-xl shadow-2xl border-b-4 border-cyan-500">
+      <header className="text-center mb-10 pt-8 pb-8 bg-white rounded-xl shadow-2xl border-b-4 border-cyan-500">
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-gray-900 leading-tight">
           {about.title}
         </h1>
@@ -192,7 +192,7 @@ const AboutPage = () => {
         </p>
       </header>
 
-      <main className="max-w-7xl mx-auto space-y-24">
+      <main className="max-w-7xl mx-auto space-y-5">
         {/* Meaning & Vision */}
         <section
           id="meaning"
@@ -222,28 +222,10 @@ const AboutPage = () => {
           <SectionTitle icon={UserIcon}>
             Meet the Founder: {about?.founder?.name}
           </SectionTitle>
+          <p className="text-cyan-700 text-lg italic mb-6">
+            {about?.founder?.short_bio}
+          </p>
           <div className="bg-white p-8 rounded-2xl shadow-xl space-y-10">
-            <div className="grid md:grid-cols-3 gap-8 border-b pb-8">
-              <div className="md:col-span-2">
-                <h3 className="text-2xl font-bold text-gray-800 mb-3">
-                  The Short Story
-                </h3>
-                <p className="text-gray-600 text-lg italic">
-                  {about?.founder?.short_bio}
-                </p>
-              </div>
-              {about?.founder?.upcoming_goal && (
-                <div className="bg-blue-50 p-4 rounded-xl shadow-md border-l-4 border-blue-500">
-                  <h4 className="font-semibold text-lg text-blue-800 mb-1">
-                    Upcoming Goal
-                  </h4>
-                  <p className="text-sm text-gray-700">
-                    {about.founder.upcoming_goal}
-                  </p>
-                </div>
-              )}
-            </div>
-
             <Timeline data={about.roadmap || []} />
           </div>
         </section>
@@ -295,11 +277,6 @@ const AboutPage = () => {
                   value="https://ant.design/"
                   icon={logo}
                 />
-                {/* <img
-                  src={about.support.qr_url}
-                  alt="Support QR / Link"
-                  className="w-32 h-32 rounded object-contain"
-                /> */}
               </div>
             )}
 

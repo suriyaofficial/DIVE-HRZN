@@ -42,7 +42,7 @@ function Scuba() {
                   // gap: 2,
                   // padding: "4px 6px",
                   borderRadius: 999,
-                  background: "#fafafa",
+                  background: "#f0ededff",
                   // flexWrap: "wrap", // so it wraps on mobile
                 }}
               >
@@ -50,7 +50,7 @@ function Scuba() {
                   const isActive = activeTab === cat;
                   return (
                     <Button
-                    size="small"
+                    // size=""
                       key={cat}
                       type="text"
                       onClick={() => setActiveTab(cat)}
@@ -60,7 +60,7 @@ function Scuba() {
                         fontSize: 12,
                         fontWeight: isActive ? 600 : 400,
                         background: isActive ? "#ffffff" : "transparent",
-                        boxShadow: isActive ? "0 0 0 1px #e6f4ff" : "none",
+                        boxShadow: isActive ? "0 0 0 1px #3facffff" : "none",
                       }}
                     >
                       {cat}
