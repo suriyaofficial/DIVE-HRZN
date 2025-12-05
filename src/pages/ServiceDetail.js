@@ -32,6 +32,7 @@ import {
 } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
 import Cookies from "js-cookie";
+import { trackEvent } from "../analytics";
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -53,7 +54,7 @@ export default function ServiceDetail() {
   });
   const userDetails = getuser ? getuser : user;
   const [email, setEmail] = useState(userDetails?.email || null);
-  const [loading, setLoading] = useState( null);
+  const [loading, setLoading] = useState(null);
   const [phoneNo, setPhoneNo] = useState(userDetails?.phoneNo || "+91");
   const navigate = useNavigate();
   const location = useLocation();
@@ -98,6 +99,11 @@ export default function ServiceDetail() {
       name: `${userDetails?.firstName} ${userDetails?.lastName}`,
       initiatedDate: new Date().toISOString().split("T")[0],
     };
+    const category = data.SKU.split("-")[0].toLowerCase();
+
+    trackEvent(`get_price_${category}_product`, {
+      sku: data.SKU,
+    });
     setLoading(true);
     quoteMutation.mutate(payload);
   };

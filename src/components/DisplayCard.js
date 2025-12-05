@@ -1,5 +1,6 @@
 import { Card, Button, Tag, Badge, Flex } from "antd";
 import { useNavigate } from "react-router-dom";
+import { trackEvent } from "../analytics";
 
 const { Meta } = Card;
 
@@ -19,7 +20,16 @@ export default function DisplayCard({ item }) {
     status === "sold out" ? { filter: "grayscale(1) opacity(0.7)" } : {};
 
   const handleMore = () => {
-    navigate(`/scuba/${encodeURIComponent(item.SKU)}`);
+    const category = item.SKU.split("-")[0].toLowerCase();
+
+    trackEvent(`view_${category}_product`, {
+      sku: item.SKU,
+    });
+    if (item.SKU.startsWith("SCUBA-")) {
+      navigate(`/scuba/${encodeURIComponent(item.SKU)}`);
+    } else if (item.SKU.startsWith("SKYDIVE-")) {
+      navigate(`/skydive/${encodeURIComponent(item.SKU)}`);
+    }
   };
 
   const coverImg = item.photos && item.photos.length ? item.photos[0] : "";

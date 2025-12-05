@@ -1,6 +1,6 @@
 import "./App.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import Home from "./pages/Home";
 import Navbar from "./components/Navbar";
 import Scuba from "./pages/Scuba";
@@ -17,13 +17,24 @@ import ServiceDetail from "./pages/ServiceDetail";
 import TermsPage from "./pages/TermsPage";
 import RefundPolicyPage from "./pages/RefundPolicyPage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import { useEffect } from "react";
+import { trackPageView } from "./analytics";
 function App() {
   const queryClient = new QueryClient();
+const RouteTracker = () => {
+  const location = useLocation();
 
+  useEffect(() => {
+    trackPageView(location.pathname + location.search);
+  }, [location]);
+
+  return null;
+};
   return (
     <>
       <QueryClientProvider client={queryClient}>
         <Router>
+          <RouteTracker />
           <Navbar />
           <Routes>
             <Route path="/" element={<Home />} />
