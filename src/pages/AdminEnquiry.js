@@ -1,5 +1,5 @@
 // EnquiryDashboard.jsx
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Table,
   Input,
@@ -9,16 +9,17 @@ import {
   Tag,
   Button,
   Tooltip,
+  Spin,
+  Row,
+  Col,
+  Empty,
 } from "antd";
-import {
-  CopyOutlined,
-  WhatsAppOutlined,
-} from "@ant-design/icons";
+import { CopyOutlined, WhatsAppOutlined } from "@ant-design/icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { useNavigate } from "react-router-dom";
-import { getallENQ } from "../services/api"; // adjust path
-
+import { getallENQ, getallENQAdmin } from "../services/api"; // adjust path
+import Cookies from "js-cookie";
 const { Search } = Input;
 const { Text } = Typography;
 
@@ -89,23 +90,29 @@ const PAYMENT_COLORS = {
   Null: "default",
 };
 
-const EnquiryDashboard = () => {
+const AdminEnquiry = () => {
   const [dealFilter, setDealFilter] = React.useState("open"); // "all" | "open"
   const [emailQuery, setEmailQuery] = React.useState("");
-
+  const accessToken = Cookies.get("token");
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-
+  
+  useEffect(() => {
+    if (!accessToken) {
+      navigate(`/`);
+    }
+  }, [accessToken, navigate]);
   // Fetch enquiries with filters (deal + email)
   const { data, isLoading, isError } = useQuery({
     queryKey: ["allENQ", { dealFilter, emailQuery }],
+    enabled: !!accessToken ,
     queryFn: async () => {
       const params = new URLSearchParams();
       if (dealFilter === "open") params.append("deal", "open");
       if (emailQuery) params.append("q", emailQuery);
 
       const queryString = params.toString() ? `?${params.toString()}` : "";
-      const response = await getallENQ(queryString);
+      const response = await getallENQAdmin(queryString, accessToken);
       return response;
     },
     keepPreviousData: true,
@@ -239,9 +246,7 @@ const EnquiryDashboard = () => {
         render: (payment) => {
           const val = payment || "";
           return (
-            <Tag color={PAYMENT_COLORS[val] || "default"}>
-              {val || ""}
-            </Tag>
+            <Tag color={PAYMENT_COLORS[val] || "default"}>{val || ""}</Tag>
           );
         },
       },
@@ -272,75 +277,92 @@ const EnquiryDashboard = () => {
       },
     ];
   }, [enquiries]);
-
+  if (isLoading) {
+    return (
+      <Row
+        justify="center"
+        style={{ minHeight: "100vh", padding: 16, background: "#f5f5f5" }}
+      >
+        <Col>
+          <Spin />
+        </Col>
+      </Row>
+    );
+  }
   return (
     <div style={{ padding: 12 }}>
-      <Space
-        direction="vertical"
-        size="small"
-        // style={{ width: "100%", marginBottom: 8 }}
-      >
-        <Text strong style={{ fontSize: 16 }}>
-          Enquiry Dashboard
-        </Text>
-
-        {/* Top filters: email search + open/all toggle */}
-        <Space
-          wrap
-          style={{
-            // width: "100%",
-            justifyContent: "space-between",
-          }}
-        >
-          <Search
-            allowClear
-            placeholder="Search by email"
-            style={{ maxWidth: 280 }}
+      {!isLoading &&data ? (
+        <>
+          <Space
+            direction="vertical"
             size="small"
-            onSearch={(value) => setEmailQuery(value.trim())}
-            onChange={(e) => {
-              if (!e.target.value) setEmailQuery("");
+            // style={{ width: "100%", marginBottom: 8 }}
+          >
+            <Text strong style={{ fontSize: 16 }}>
+              Enquiry Dashboard
+            </Text>
+
+            {/* Top filters: email search + open/all toggle */}
+            <Space
+              wrap
+              style={{
+                // width: "100%",
+                justifyContent: "space-between",
+              }}
+            >
+              <Search
+                allowClear
+                placeholder="Search by email"
+                style={{ maxWidth: 280 }}
+                size="small"
+                onSearch={(value) => setEmailQuery(value.trim())}
+                onChange={(e) => {
+                  if (!e.target.value) setEmailQuery("");
+                }}
+              />
+
+              <Segmented
+                size="small"
+                options={[
+                  { label: "All Enquiries", value: "all" },
+                  { label: "Open Deals", value: "open" },
+                ]}
+                value={dealFilter}
+                onChange={(val) => setDealFilter(val)}
+              />
+            </Space>
+          </Space>
+
+          <Table
+            size="small"
+            loading={isLoading}
+            columns={columns}
+            dataSource={enquiries}
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: true,
+              showTotal: (total) => `Total ${total} enquiries`,
             }}
+            rowKey="id"
+            tableLayout="fixed"
+            onRow={(record) => ({
+              onClick: () => {
+                navigate(`/admin/enquiries/${record.enqNo}`);
+              },
+            })}
           />
 
-          <Segmented
-            size="small"
-            options={[
-              { label: "All Enquiries", value: "all" },
-              { label: "Open Deals", value: "open" },
-            ]}
-            value={dealFilter}
-            onChange={(val) => setDealFilter(val)}
-          />
-        </Space>
-      </Space>
-
-      <Table
-        size="small"
-        loading={isLoading}
-        columns={columns}
-        dataSource={enquiries}
-        pagination={{
-          pageSize: 10,
-          showSizeChanger: true,
-          showTotal: (total) => `Total ${total} enquiries`,
-        }}
-        rowKey="id"
-        tableLayout="fixed"
-        onRow={(record) => ({
-          onClick: () => {
-            navigate(`/admin/enquiries/${record.enqNo}`);
-          },
-        })}
-      />
-
-      {isError && (
-        <Text type="danger" style={{ marginTop: 8, display: "block" }}>
-          Failed to load enquiries.
-        </Text>
+          {isError && (
+            <Text type="danger" style={{ marginTop: 8, display: "block" }}>
+              Failed to load enquiries.
+            </Text>
+          )}
+        </>
+      ) : (
+        <Empty description="admin can only access this page" />
       )}
     </div>
   );
 };
 
-export default EnquiryDashboard;
+export default AdminEnquiry;

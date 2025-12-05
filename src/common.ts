@@ -1,6 +1,8 @@
 import { FireFilled, HeartFilled, StarFilled } from "@ant-design/icons";
 export const BASE_URL = "https://server-ag3p.onrender.com";
-export const FRONTEND_URL = "https://dive-hrzn.netlify.app";
+// export const BASE_URL = "http://localhost:3100";
+// export const FRONTEND_URL = "https://dive-hrzn.netlify.app";
+export const FRONTEND_URL = "https://divehrzn.com";
 
 export const sliderDesigns = {
   star: { Icon: StarFilled, color: "#fadb14" },

@@ -32,24 +32,20 @@ export async function getDetail(sku) {
     return response.data;
   } catch (err) {}
 }
-export async function postQuote(body) {
+export async function postQuote(body, accessToken) {
   // console.log("body", body);
 
   const requestUrl = `${BASE_URL}/enquiries/request?type=quote`;
   try {
-    const response = axios.post(requestUrl, body);
+    const response = axios.post(requestUrl, body, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
     return response;
   } catch (err) {}
 }
-export async function postReserve(body) {
-  // console.log("body", body);
 
-  const requestUrl = `${BASE_URL}/enquiries/request?type=reserve`;
-  try {
-    const response = axios.post(requestUrl, body);
-    return response;
-  } catch (err) {}
-}
 export const loginWithGoogle = async (idToken) => {
   try {
     const requestUrl = `${BASE_URL}/auth/google-login`;
@@ -88,14 +84,43 @@ export const updatePhoneNumber = async ({ phoneNo, token }) => {
   } catch (err) {}
 };
 
-export const getallENQ = async (queryString = "") => {
-  const res = await axios.get(`${BASE_URL}/all/enquiries${queryString}`);
+export const getallENQ = async (queryString = "", accessToken) => {
+  //  const requestUrl = `${BASE_URL}/my/details`;
+  try {
+    const requestUrl = `${BASE_URL}/all/enquiries${queryString}`;
+    // console.log("requestUrl", requestUrl);
+    const response = await axios.get(requestUrl, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    // console.log("getMyDetails api response", rponse);
+    return response.data;
+  } catch {}
   // console.log("res in api", res);
-  return res.data;
 };
-export const updateEnquiry = async (enqId, updates) => {
+export const getallENQAdmin = async (queryString = "", accessToken) => {
+  //  const requestUrl = `${BASE_URL}/my/details`;
+  try {
+    const requestUrl = `${BASE_URL}/all/enquiries/admin${queryString}`;
+    // console.log("requestUrl", requestUrl);
+    const response = await axios.get(requestUrl, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    // console.log("getMyDetails api response", rponse);
+    return response.data;
+  } catch {}
+  // console.log("res in api", res);
+};
+export const updateEnquiry = async (enqId, updates, accessToken) => {
   let requestUrl = `${BASE_URL}/enquiries/update/${enqId}`;
-  const res = await axios.post(requestUrl, updates);
+  const res = await axios.post(requestUrl, updates, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
   return res.data;
 };
 

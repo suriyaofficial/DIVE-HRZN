@@ -149,6 +149,7 @@ const Navbar = () => {
     message.success("Successfully signed in!");
     setAuthModalOpen(false); // close modal
     setLoading(false);
+    queryClient.invalidateQueries(["myDetails"]);
 
     // 🔁 Handle redirect back to the page user came from
     const params = new URLSearchParams(location.search);
@@ -355,7 +356,7 @@ const Navbar = () => {
         placement="left"
         onClose={closeDrawer}
         open={drawerOpen}
-        bodyStyle={{ padding: 0 }}
+        styles={{ body: { padding: 0 } }}
       >
         <Divider style={{ margin: 0 }} />
 

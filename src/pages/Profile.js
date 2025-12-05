@@ -1,19 +1,25 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, Form, Avatar, notification, Row, Col, Spin } from "antd";
 import { UserOutlined } from "@ant-design/icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updatePhoneNumber } from "../services/api";
 import PersonalDetailsForm from "../components/PersonalDetailsForm";
+import Cookies from "js-cookie";
+import { useNavigate, useLocation } from "react-router-dom";
 
 // ---------- MAIN PROFILE COMPONENT ----------
 
 export default function Profile() {
   const queryClient = useQueryClient();
   const userDetails = queryClient.getQueryData(["myDetails"]);
+  console.log("userDetails", userDetails);
 
   const [form] = Form.useForm();
   const [phone, setPhone] = useState(userDetails?.phoneNo || "+91");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const accessToken = Cookies.get("token");
 
   const isPhoneValid = (p) => /^\+?[1-9]\d{0,3}[ ]?\d{7,12}$/.test(p.trim());
 
@@ -26,7 +32,7 @@ export default function Profile() {
   // ---- PHONE NUMBER UPDATE MUTATION ----
   const mutation = useMutation({
     mutationFn: (newPhone) =>
-      updatePhoneNumber({ email: userDetails?.email, phoneNo: newPhone }),
+      updatePhoneNumber({ phoneNo: newPhone, accessToken }),
     onSuccess: () => {
       setLoading(false);
       notification.success({
@@ -49,6 +55,11 @@ export default function Profile() {
     setLoading(true);
     mutation.mutate(phone.trim());
   };
+  useEffect(() => {
+    if (!accessToken) {
+      navigate(`/`);
+    }
+  }, [accessToken, navigate]);
 
   // If user details are not loaded yet
   if (!userDetails) {
@@ -76,12 +87,12 @@ export default function Profile() {
       >
         <Col xs={20} sm={20} md={16} lg={8} xl={8}>
           <Card
-            style={{
+            styles={{
               width: "90%",
               borderRadius: 16,
               boxShadow: "0 18px 40px rgba(15, 23, 42, 0.18)",
+              body: { padding: 24 },
             }}
-            bodyStyle={{ padding: 24 }}
           >
             {/* Avatar + name */}
             <Row justify="center">
@@ -91,7 +102,7 @@ export default function Profile() {
                   src={userDetails?.profileImage}
                   icon={!userDetails?.profileImage ? <UserOutlined /> : null}
                 >
-                  <UserOutlined  />
+                  <UserOutlined />
                 </Avatar>
               </Col>
             </Row>

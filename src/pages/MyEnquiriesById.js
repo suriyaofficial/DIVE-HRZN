@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Row, Col, Card, Badge, Tag, Space, Button, Spin, message } from "antd";
 import { CreditCardOutlined, LinkOutlined } from "@ant-design/icons";
-import { useParams, useNavigate } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { getallENQ } from "../services/api";
 import dayjs from "dayjs";
-import EmailVerifyCard from "../components/EmailVerifyCard";
+import Cookies from "js-cookie";
 
 const STATUS_COLORS = {
   Created: "blue",
@@ -32,39 +32,35 @@ const tsToDate = (ts) => {
   return new Date(ms);
 };
 
-export default function EnquiryDetailsPagePublic() {
+export default function MyEnquiriesById() {
   const { enqNo } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const accessToken = Cookies.get("token");
 
-  const [emailInput, setEmailInput] = useState("");
-  const [verifiedEmail, setVerifiedEmail] = useState("");
-  const [error, setError] = useState("");
   const [messageApi, contextHolder] = message.useMessage();
 
-  const enquiryMutation = useMutation({
-    mutationFn: async ({ enqId, email }) => {
-      const res = await getallENQ(`?id=${enqId}&email=${email}`);
+  // 🔐 Redirect to sign-in if no access token
+  useEffect(() => {
+    if (!accessToken) {
+      const redirectTo = encodeURIComponent(
+        location.pathname + location.search
+      );
+      navigate(`/?auth=signin&redirect=${redirectTo}`);
+    }
+  }, [accessToken, location.pathname, location.search, navigate]);
+  let ENQ_ID = enqNo;
+  const { data, isLoading } = useQuery({
+    queryKey: ["myEnquiryDetails", ENQ_ID],
+    enabled: !!ENQ_ID && !!accessToken,
+    refetchOnWindowFocus: false,
+    queryFn: async () => {
+      const res = await getallENQ(`?id=${ENQ_ID}`, accessToken);
       return res?.enquiries?.[0];
-    },
-    onSuccess: (enquiryDetail, variables) => {
-      if (!enquiryDetail) {
-        messageApi.error("Enquiry not found. Please check your email.");
-        return;
-      }
-      setVerifiedEmail(variables.email);
-      messageApi.success("Email verified. Showing your enquiry details.");
-    },
-    onError: (err) => {
-      const status = err?.response?.status || err?.status;
-      if (status === 401) {
-        messageApi.error("Authentication failed. Email does not match.");
-      } else {
-        messageApi.error("Something went wrong. Please try again.");
-      }
     },
   });
 
-  const enquiry = enquiryMutation.data || null;
-  const isLoading = enquiryMutation.isPending;
+  const enquiry = data;
 
   const createdAtDate = enquiry?.createdAt ? tsToDate(enquiry.createdAt) : null;
   const preferredDate = enquiry?.preferredDate
@@ -77,54 +73,17 @@ export default function EnquiryDetailsPagePublic() {
 
   const handleOpenLink = (link) => {
     if (!link) return;
-
-    if (!verifiedEmail) {
-      messageApi.error("Please verify your email first.");
-      return;
-    }
-
-    const finalUrl = `${link}/${encodeURIComponent(verifiedEmail)}`;
-    window.location.href = finalUrl;
-  };
-
-  const handleVerifyEmail = () => {
-    setError("");
-
-    const typedEmail = emailInput.trim().toLowerCase();
-
-    if (!typedEmail) {
-      setError("Please enter your email.");
-      return;
-    }
-
-    if (!enqNo) {
-      setError("Invalid enquiry number.");
-      return;
-    }
-
-    enquiryMutation.mutate({ enqId: enqNo, email: typedEmail });
+    // 🚀 No more email in URL, just open the link
+    // window.location.href = link;
+    window.open(`${link}`, "_blank", "noopener,noreferrer");
   };
 
   return (
     <>
       {contextHolder}
 
-      {/* 🔐 Step 1: same Antd email verify UI as DocViewPublic */}
-      {!enquiry && (
-        <EmailVerifyCard
-          title="Verify your email"
-          subtitle={undefined}
-          email={emailInput}
-          error={error}
-          loading={isLoading}
-          onChangeEmail={setEmailInput}
-          onSubmit={handleVerifyEmail}
-        />
-      )}
-
-      {/* Step 2: show enquiry details AFTER verification */}
-      {!!enquiry && (
-        <Row justify="center" style={{ minHeight: "100vh", padding: 16 }}>
+      <Row justify="center" style={{ minHeight: "100vh", padding: 16 }}>
+        {accessToken && (
           <Col xs={24} md={18} lg={14}>
             <Card
               style={{
@@ -139,7 +98,13 @@ export default function EnquiryDetailsPagePublic() {
                 </div>
               )}
 
-              {!isLoading && (
+              {!isLoading && !enquiry && (
+                <div style={{ textAlign: "center", padding: "20px 0" }}>
+                  No enquiry details available.
+                </div>
+              )}
+
+              {!isLoading && enquiry && (
                 <Badge.Ribbon text={enquiry?.status} color={statusColor}>
                   <div style={{ marginTop: 16 }}>
                     <Space
@@ -326,8 +291,8 @@ export default function EnquiryDetailsPagePublic() {
               )}
             </Card>
           </Col>
-        </Row>
-      )}
+        )}
+      </Row>
     </>
   );
 }

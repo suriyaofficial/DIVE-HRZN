@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Row, Col, Card, Space, Spin, Empty, Button, Badge, Radio } from "antd";
 import { useNavigate } from "react-router-dom";
 import { getallENQ } from "../services/api";
+import Cookies from "js-cookie";
 
 const STATUS_COLORS = {
   Created: "blue",
@@ -14,30 +15,35 @@ const STATUS_COLORS = {
   "Service Canceled": "red",
 };
 
-function MyEnquiriesView() {
+function MyEnquiries() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [dealFilter, setDealFilter] = React.useState("open"); // "all" | "open"
-
+  const accessToken = Cookies.get("token");
+  useEffect(() => {
+    if (!accessToken) {
+      navigate(`/`);
+    }
+  }, [accessToken, navigate]);
   const userDetails = queryClient.getQueryData(["myDetails"]);
 
   const email = userDetails?.email || null;
 
   const { data: myEnquiries = [], isLoading } = useQuery({
-    queryKey: ["myEnquiriesList", email, dealFilter],
-    enabled: !!email,
+    queryKey: ["myEnquiriesList", dealFilter],
+    enabled: !!accessToken,
     refetchOnWindowFocus: false,
     queryFn: async () => {
-      if (!email) return [];
+      if (!accessToken) return [];
       const params = new URLSearchParams();
       if (dealFilter) {
         let deal = dealFilter.toString();
         params.append("deal", deal);
       }
-      params.append("q", email);
+      // params.append("q", email);
 
       const queryString = `?${params.toString()}`;
-      const res = await getallENQ(queryString);
+      const res = await getallENQ(queryString, accessToken);
       return res?.enquiries || [];
     },
   });
@@ -104,13 +110,13 @@ function MyEnquiriesView() {
                       size="small"
                       key={enq.enqNo}
                       hoverable
-                      style={{
+                      styles={{
                         borderRadius: 12,
                         boxShadow: "0 4px 12px rgba(15, 23, 42, 0.08)",
+                        body: { padding: 16 },
                       }}
-                      bodyStyle={{ padding: 16 }}
                       onClick={() =>
-                        navigate(`/my-enquiries/${enq.enqNo}/${email}`)
+                        navigate(`/my-enquiries/${enq.enqNo}`)
                       }
                     >
                       <Space direction="vertical" style={{ width: "100%" }}>
@@ -170,7 +176,7 @@ function MyEnquiriesView() {
                               type="link"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/my-enquiries/${enq.enqNo}/${email}`);
+                                navigate(`/my-enquiries/${enq.enqNo}`);
                               }}
                               style={{ padding: 0, fontSize: 14 }}
                             >
@@ -191,4 +197,4 @@ function MyEnquiriesView() {
   );
 }
 
-export default MyEnquiriesView;
+export default MyEnquiries;

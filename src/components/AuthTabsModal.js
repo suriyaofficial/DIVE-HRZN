@@ -1,17 +1,8 @@
 import { Modal, Button } from "antd";
 import { GoogleOutlined } from "@ant-design/icons";
-import React, { useState } from "react";
 
 const AuthTabsModal = ({ visible, onClose, loading, handleGoogleSignIn }) => {
-  // compact modal dimensions ~ 9:16 (portrait)
   const modalWidth = 360;
-  const modalBodyStyle = {
-    height: "80vh",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "flex-start",
-    padding: 20,
-  };
 
   return (
     <Modal
@@ -19,15 +10,22 @@ const AuthTabsModal = ({ visible, onClose, loading, handleGoogleSignIn }) => {
       onCancel={onClose}
       footer={null}
       width={modalWidth}
-      bodyStyle={modalBodyStyle}
+      styles={{
+        body: {
+          height: "80vh",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "flex-start",
+          padding: 20,
+        },
+      }}
       centered
-      destroyOnClose
+      destroyOnHidden
       closable
     >
       <div
         style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}
       >
-        {/* Small premium header */}
         <div style={{ textAlign: "center" }}>
           <div style={{ fontWeight: 800, fontSize: 20 }}>Dive Hrzn</div>
           <div style={{ color: "#888", fontSize: 14, marginTop: 4 }}>

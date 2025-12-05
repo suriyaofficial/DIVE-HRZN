@@ -1,7 +1,6 @@
 import { Carousel } from "antd";
 
 const images = [
-  // replace with local imports like: import b1 from "../assets/banner1.jpg"
   "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&q=80",
   "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1600&q=80",
   "https://images.unsplash.com/photo-1526772662000-3f88f10405ff?w=1600&q=80",

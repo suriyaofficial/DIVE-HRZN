@@ -1,24 +1,36 @@
 import React, { useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Empty, message, Row, Spin } from "antd";
-import { getallENQ } from "../services/api";
+import { getallENQ } from "../services/api.js";
 import { BASE_URL } from "../common.ts";
 
-function DocViewInternal() {
-  const { kind, enqNo, email } = useParams();
+import Cookies from "js-cookie";
+function ProtectedRedirect() {
+  const { kind, enqNo } = useParams();
   const [messageApi, contextHolder] = message.useMessage();
+  const accessToken = Cookies.get("token");
+  const navigate = useNavigate();
+  const location = useLocation();
   // const BASE_URL = process.env.BASE_URL;
+  useEffect(() => {
+    if (!accessToken) {
+      const redirectTo = encodeURIComponent(
+        location.pathname + location.search
+      );
+      navigate(`/?auth=signin&redirect=${redirectTo}`);
+    }
+  }, [accessToken, location.pathname, location.search, navigate]);
   const {
     data: enquiryDetail,
     isLoading,
     onError,
   } = useQuery({
-    queryKey: ["myEnquiryDetails", enqNo, email],
-    enabled: !!enqNo && !!email,
+    queryKey: ["myEnquiryDetails", enqNo],
+    enabled: !!enqNo && !!accessToken,
     refetchOnWindowFocus: false,
     queryFn: async () => {
-      const res = await getallENQ(`?id=${enqNo}&email=${email}`);
+      const res = await getallENQ(`?id=${enqNo}`, accessToken);
       return res?.enquiries?.[0];
     },
   });
@@ -36,15 +48,15 @@ function DocViewInternal() {
       rawLink = enquiryDetail.billingLink;
     } else if (kind === "refund-receipt") {
       rawLink = enquiryDetail.refundReceiptLink;
+    } else if (kind === "pay") {
+      rawLink = enquiryDetail.paymentLink;
     } else {
       messageApi.error("Invalid document type.");
       return;
     }
 
     if (!rawLink) {
-      messageApi.error(
-        "Document link is not available yet. Please try again later."
-      );
+      messageApi.error("link is not available yet. Please try again later.");
       return;
     }
 
@@ -62,9 +74,10 @@ function DocViewInternal() {
         finalLink = backendBaseUrl + "/" + rawLink.replace(/^\//, "");
       }
     }
+    console.log("finalLink", `${finalLink}?token=${accessToken}`);
 
-    window.location.href = finalLink;
-  }, [isLoading, enquiryDetail, kind, messageApi]);
+    window.location.href = `${finalLink}?token=${accessToken}`;
+  }, [isLoading, enquiryDetail, kind, messageApi, accessToken]);
 
   return (
     <>
@@ -85,4 +98,4 @@ function DocViewInternal() {
   );
 }
 
-export default DocViewInternal;
+export default ProtectedRedirect;

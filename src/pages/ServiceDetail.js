@@ -13,50 +13,46 @@ import {
   message,
   Tag,
   Typography,
-  Descriptions,
   Space,
   Badge,
   Input,
-  InputNumber,
   Alert,
   Form,
   Spin,
 } from "antd";
-import { getDetail, postQuote, postReserve } from "../services/api";
+import { getDetail, postQuote } from "../services/api";
 import {
   UserOutlined,
   CalendarOutlined,
   EnvironmentOutlined,
-  PoweroffOutlined,
   CaretUpFilled,
   CaretDownFilled,
   MailOutlined,
-  PhoneOutlined,
   WhatsAppOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
+import Cookies from "js-cookie";
 
 const { Title, Paragraph, Text } = Typography;
 
-export default function Detail() {
+export default function ServiceDetail() {
   const { sku } = useParams();
   const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedAction, setSelectedAction] = useState(null);
   const [openCards, setOpenCards] = useState(true);
   const userDetails = queryClient.getQueryData(["myDetails"]);
   const [email, setEmail] = useState(userDetails?.email || null);
   const [phoneNo, setPhoneNo] = useState(userDetails?.phoneNo || "+91");
   const navigate = useNavigate();
   const location = useLocation();
-  const isLoggedIn = !!userDetails?.email;
+  const accessToken = Cookies.get("token");
 
   const tagProps = {
-    "available": { color: "green", text: "Available" },
+    available: { color: "green", text: "Available" },
     "coming soon": { color: "orange", text: "Coming soon" },
     "sold out": { color: "red", text: "Sold out" },
   };
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: [`detail-${sku}`],
     queryFn: async () => {
       const response = await getDetail(sku);
@@ -68,10 +64,11 @@ export default function Detail() {
   const tag = tagProps[data?.status?.toLowerCase()];
 
   const quoteMutation = useMutation({
-    mutationFn: (payload) => postQuote(payload),
+    mutationFn: (payload) => postQuote(payload, accessToken),
     onSuccess: (data) => {
       message.success("Quote request sent! We will contact you soon.");
       queryClient.invalidateQueries(["detail", sku]);
+      queryClient.invalidateQueries(["myDetails"]);
       setModalOpen(false);
     },
     onError: () => {
@@ -79,23 +76,9 @@ export default function Detail() {
     },
   });
 
-  const reserveMutation = useMutation({
-    mutationFn: (payload) => postReserve(payload),
-    onSuccess: (data) => {
-      message.success(
-        "Reservation successful! Check your email for confirmation."
-      );
-      queryClient.invalidateQueries(["detail", sku]);
-      setModalOpen(false);
-    },
-    onError: () => {
-      message.error("Reservation failed. Please try again.");
-    },
-  });
-
   const handleConfirm = (values) => {
     const payload = {
-      sku:data.SKU,
+      sku: data.SKU,
       title: data?.title,
       email: email,
       phoneNo: phoneNo,
@@ -103,11 +86,7 @@ export default function Detail() {
       initiatedDate: new Date().toISOString().split("T")[0],
     };
 
-    if (selectedAction === "quote") {
-      quoteMutation.mutate(payload);
-    } else {
-      reserveMutation.mutate(payload);
-    }
+    quoteMutation.mutate(payload);
   };
 
   const photos = useMemo(
@@ -131,7 +110,7 @@ export default function Detail() {
     );
   };
   const handleActionClick = (action) => {
-    if (!isLoggedIn) {
+    if (!accessToken) {
       // send user to home with auth=signin and redirect back to this page after login
       const redirectTo = encodeURIComponent(
         location.pathname + location.search
@@ -140,7 +119,6 @@ export default function Detail() {
       return;
     }
 
-    setSelectedAction(action);
     setModalOpen(true);
   };
 
@@ -193,7 +171,7 @@ export default function Detail() {
         <div style={{ padding: 24 }}>
           <Row gutter={[24, 24]}>
             <Col xs={24} md={10} lg={8}>
-              <Card bordered={false} bodyStyle={{ padding: 8 }}>
+              <Card variant="borderless" styles={{ body: { padding: 8 } }}>
                 {photos.length > 0 ? (
                   <div>
                     <Image.PreviewGroup>
@@ -346,26 +324,16 @@ export default function Detail() {
                   <Divider />
 
                   {/* Action button */}
-                  {isLoggedIn ? (
+                  {accessToken ? (
                     <Space>
-                      {data?.price ? (
-                        <Button
-                          type="primary"
-                          onClick={() => handleActionClick("reserve")}
-                          loading={reserveMutation.isLoading}
-                          disabled={tag?.text === "Sold out"}
-                        >
-                          Reserve the Seat
-                        </Button>
-                      ) : (
-                        <Button
-                          type="primary"
-                          onClick={() => handleActionClick("quote")}
-                          loading={quoteMutation.isLoading}
-                        >
-                          Get Quote
-                        </Button>
-                      )}
+                      <Button
+                        type="primary"
+                        onClick={() => handleActionClick("quote")}
+                        loading={quoteMutation.isLoading}
+                        disabled={tag?.text === "Sold out"}
+                      >
+                        Get Quote
+                      </Button>
                     </Space>
                   ) : (
                     <Button
@@ -401,27 +369,17 @@ export default function Detail() {
           </Row>
 
           <Modal
-            title={
-              selectedAction === "quote"
-                ? "Request a Quote"
-                : "Reserve Your Seat"
-            }
+            title={"Request a Quote"}
             open={modalOpen}
             onCancel={() => setModalOpen(false)}
             onOk={handleConfirm}
-            okText={
-              selectedAction === "quote"
-                ? "Send Quote Request"
-                : "Confirm Reservation"
-            }
-            confirmLoading={
-              quoteMutation.isLoading || reserveMutation.isLoading
-            }
+            okText={"Send Quote Request"}
+            confirmLoading={quoteMutation.isLoading}
             okButtonProps={{
               disabled: !email?.trim() || !phoneNo?.trim(), // enable only when filled
             }}
             width={380} // compact width (mobile-friendly)
-            bodyStyle={{ paddingTop: 10, paddingBottom: 10 }}
+            styles={{ body: { paddingTop: 10, paddingBottom: 10 } }}
           >
             <Space direction="vertical" style={{ width: "100%" }} size="small">
               {/* Short intro */}

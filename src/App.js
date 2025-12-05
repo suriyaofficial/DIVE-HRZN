@@ -7,15 +7,13 @@ import Scuba from "./pages/Scuba";
 import Footer from "./components/Footer";
 import Skydive from "./pages/Skydive";
 import About from "./pages/About";
-import Detail from "./pages/Detail";
 import Profile from "./pages/Profile";
-import EnquiryDashboard from "./pages/EnquiryDashboard";
-import EnquiryDetails from "./pages/EnquiryDetails";
-import MyEnquiriesView from "./components/MyEnquiriesView";
-import EnquiryDetailsPage from "./components/EnquiryDetailsPage";
-import DocViewPublic from "./pages/DocViewPublic";
-import DocViewInternal from "./pages/DocViewInternal";
-import EnquiryDetailsPagePublic from "./components/EnquiryDetailsPagePublic";
+import MyEnquiries from "./pages/MyEnquiries";
+import MyEnquiriesById from "./pages/MyEnquiriesById";
+import AdminEnquiry from "./pages/AdminEnquiry";
+import AdminEnquiryById from "./pages/AdminEnquiryById";
+import ProtectedRedirect from "./pages/ProtectedRedirect";
+import ServiceDetail from "./pages/ServiceDetail";
 function App() {
   const queryClient = new QueryClient();
 
@@ -27,33 +25,21 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/scuba" element={<Scuba />} />
-            <Route path="/scuba/:sku" element={<Detail />} />
+            <Route path="/scuba/:sku" element={<ServiceDetail />} />
             <Route path="/skydive" element={<Skydive />} />
+            <Route path="/skydive/:sku" element={<ServiceDetail />} />
             <Route path="/about" element={<About />} />
             <Route path="/profile" element={<Profile />} />
-            <Route
-              path="/view/:kind/:enqNo/:email"
-              element={<DocViewInternal />}
-            />
-            <Route path="/my-enquiries" element={<MyEnquiriesView />} />
-            <Route
-              path="/my-enquiries/:enqNo/:email"
-              element={<EnquiryDetailsPage />}
-            />
-            <Route path="/admin/enquiries" element={<EnquiryDashboard />} />
+            <Route path="/my-enquiries" element={<MyEnquiries />} />
+            <Route path="/my-enquiries/:enqNo/" element={<MyEnquiriesById />} />
+            <Route path="/link/:kind/:enqNo" element={<ProtectedRedirect />} />
+            <Route path="/admin/enquiries" element={<AdminEnquiry />} />
             <Route
               path="/admin/enquiries/:enqNo"
-              element={<EnquiryDetails />}
-            />
-            {/* public routes */}
-            <Route path="/view/:kind/:enqNo" element={<DocViewPublic />} />
-            <Route
-              path="/my-enquiries/:enqNo/"
-              element={<EnquiryDetailsPagePublic />}
+              element={<AdminEnquiryById />}
             />
           </Routes>
         </Router>
-        {/* <Login /> */}
         <Footer />
       </QueryClientProvider>
     </>
