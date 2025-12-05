@@ -260,6 +260,31 @@ const Navbar = () => {
     { label: "Skydive", path: "/skydive", disabled: true },
     { label: "About", path: "/about" },
   ];
+  const policiesPaths = ["/terms", "/refund-policy", "/privacy-policy"];
+
+  const isPolicyActive = policiesPaths.includes(location.pathname);
+
+  const policiesMenu = (
+    <Menu
+      onClick={({ key }) => {
+        navigate(key);
+      }}
+      items={[
+        {
+          key: "/terms",
+          label: "Terms & Conditions",
+        },
+        {
+          key: "/refund-policy",
+          label: "Refund Policy",
+        },
+        {
+          key: "/privacy-policy",
+          label: "Privacy Policy",
+        },
+      ]}
+    />
+  );
 
   const isMobile = !screens.md;
 
@@ -402,6 +427,29 @@ const Navbar = () => {
                         {it.label}
                       </Button>
                     ))}
+                    {/* Policies dropdown */}
+                    <Dropdown
+                      overlay={policiesMenu}
+                      trigger={["hover", "click"]}
+                    >
+                      <Button
+                        type="text"
+                        style={{
+                          borderRadius: 999,
+                          padding: "4px 12px",
+                          fontSize: 13,
+                          fontWeight: isPolicyActive ? 600 : 400,
+                          background: isPolicyActive
+                            ? "#ffffff"
+                            : "transparent",
+                          boxShadow: isPolicyActive
+                            ? "0 0 0 1px #e6f4ff"
+                            : "none",
+                        }}
+                      >
+                        Policies
+                      </Button>
+                    </Dropdown>
                   </div>
                 </Col>
 
@@ -514,6 +562,24 @@ const Navbar = () => {
               {
                 key: "/about",
                 label: "About",
+              },
+              {
+                key: "policies",
+                label: "Policies",
+                children: [
+                  {
+                    key: "/terms",
+                    label: "Terms & Conditions",
+                  },
+                  {
+                    key: "/refund-policy",
+                    label: "Refund Policy",
+                  },
+                  {
+                    key: "/privacy-policy",
+                    label: "Privacy Policy",
+                  },
+                ],
               },
             ]}
           />

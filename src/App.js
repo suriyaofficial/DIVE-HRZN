@@ -14,6 +14,9 @@ import AdminEnquiry from "./pages/AdminEnquiry";
 import AdminEnquiryById from "./pages/AdminEnquiryById";
 import ProtectedRedirect from "./pages/ProtectedRedirect";
 import ServiceDetail from "./pages/ServiceDetail";
+import TermsPage from "./pages/TermsPage";
+import RefundPolicyPage from "./pages/RefundPolicyPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 function App() {
   const queryClient = new QueryClient();
 
@@ -38,6 +41,9 @@ function App() {
               path="/admin/enquiries/:enqNo"
               element={<AdminEnquiryById />}
             />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/refund-policy" element={<RefundPolicyPage />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           </Routes>
         </Router>
         <Footer />

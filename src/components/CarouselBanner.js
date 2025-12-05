@@ -10,6 +10,7 @@ const CarouselBanner = () => {
   } = useQuery({
     queryKey: ["homepagebanner"],
     queryFn: getHomepageBanner,
+    refetchOnWindowFocus: false,
   });
 
   if (isLoading) {

@@ -2,6 +2,42 @@ import axios from "axios";
 import { BASE_URL } from "../common.ts";
 // const BASE_URL = process.env.BASE_URL;
 
+export async function getPrivacyPolicy() {
+  const requestUrl = `${BASE_URL}/privacy-policy`;
+  try {
+    // console.log("requestUrl", requestUrl);
+    const response = await axios.get(requestUrl);
+    // console.log("getMyDetails api response", rponse);
+    return response.data;
+  } catch (err) {}
+}
+export async function getRefundPolicy() {
+  const requestUrl = `${BASE_URL}/refund-policy`;
+  try {
+    // console.log("requestUrl", requestUrl);
+    const response = await axios.get(requestUrl);
+    // console.log("getMyDetails api response", rponse);
+    return response.data;
+  } catch (err) {}
+}
+export async function getTerms() {
+  const requestUrl = `${BASE_URL}/terms`;
+  try {
+    // console.log("requestUrl", requestUrl);
+    const response = await axios.get(requestUrl);
+    // console.log("getMyDetails api response", rponse);
+    return response.data;
+  } catch (err) {}
+}
+export async function getFooter() {
+  const requestUrl = `${BASE_URL}/footer`;
+  try {
+    // console.log("requestUrl", requestUrl);
+    const response = await axios.get(requestUrl);
+    // console.log("getMyDetails api response", rponse);
+    return response.data;
+  } catch (err) {}
+}
 export async function getAbout() {
   const requestUrl = `${BASE_URL}/about`;
   try {
