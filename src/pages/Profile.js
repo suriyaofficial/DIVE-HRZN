@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Card, Form, Avatar, notification, Row, Col, Spin } from "antd";
 import { UserOutlined } from "@ant-design/icons";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updatePhoneNumber } from "../services/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getMyDetails, updatePhoneNumber } from "../services/api";
 import PersonalDetailsForm from "../components/PersonalDetailsForm";
 import Cookies from "js-cookie";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -10,8 +10,19 @@ import { useNavigate, useLocation } from "react-router-dom";
 // ---------- MAIN PROFILE COMPONENT ----------
 
 export default function Profile() {
+  const accessToken = Cookies.get("token");
   const queryClient = useQueryClient();
-  const userDetails = queryClient.getQueryData(["myDetails"]);
+  let getuser = queryClient.getQueryData(["myDetails"]);
+  const { data: user } = useQuery({
+    queryKey: ["myDetails"],
+    queryFn: async () => {
+      const response = await getMyDetails(accessToken);
+      return response.data;
+    },
+    enabled: !!accessToken && !getuser,
+    refetchOnWindowFocus: false,
+  });
+  const userDetails = getuser ? getuser : user;
   console.log("userDetails", userDetails);
 
   const [form] = Form.useForm();
@@ -19,7 +30,6 @@ export default function Profile() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const accessToken = Cookies.get("token");
 
   const isPhoneValid = (p) => /^\+?[1-9]\d{0,3}[ ]?\d{7,12}$/.test(p.trim());
 

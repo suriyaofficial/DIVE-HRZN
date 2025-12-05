@@ -141,7 +141,7 @@ const Navbar = () => {
   const completeLogin = (userData, token) => {
     if (token) {
       Cookies.set("token", token, {
-        expires: 1,
+        expires: 7,
         secure: true,
         sameSite: "Strict",
       });
@@ -322,7 +322,7 @@ const Navbar = () => {
                   </Col>
                 ))}
 
-                {!userDetails ? (
+                {!accessToken ? (
                   <>
                     <Col>
                       <Button onClick={() => openAuthModal("signin")}>
@@ -395,7 +395,7 @@ const Navbar = () => {
 
           <Divider />
 
-          {!userDetails ? (
+          {!accessToken ? (
             <Button
               block
               type="primary"

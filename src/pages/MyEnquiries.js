@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Row, Col, Card, Space, Spin, Empty, Button, Badge, Radio } from "antd";
 import { useNavigate } from "react-router-dom";
-import { getallENQ } from "../services/api";
+import { getallENQ, getMyDetails } from "../services/api";
 import Cookies from "js-cookie";
 
 const STATUS_COLORS = {
@@ -25,9 +25,17 @@ function MyEnquiries() {
       navigate(`/`);
     }
   }, [accessToken, navigate]);
-  const userDetails = queryClient.getQueryData(["myDetails"]);
-
-  const email = userDetails?.email || null;
+  let getuser = queryClient.getQueryData(["myDetails"]);
+    const { data:user } = useQuery({
+        queryKey: ["myDetails"],
+        queryFn: async () => {
+          const response = await getMyDetails(accessToken);
+          return response.data;
+        },
+        enabled: !!accessToken&&!getuser,
+        refetchOnWindowFocus: false,
+      });
+     const userDetails=getuser?getuser:user;
 
   const { data: myEnquiries = [], isLoading } = useQuery({
     queryKey: ["myEnquiriesList", dealFilter],

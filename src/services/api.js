@@ -54,7 +54,7 @@ export const loginWithGoogle = async (idToken) => {
       {},
       {
         headers: {
-          Authorization: `Bearer ${idToken}`, // 👈 send as Bearer token
+          Authorization: `G-Bearer ${idToken}`, // 👈 send as Bearer token
         },
       }
     );

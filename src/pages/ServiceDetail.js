@@ -20,7 +20,7 @@ import {
   Form,
   Spin,
 } from "antd";
-import { getDetail, postQuote } from "../services/api";
+import { getDetail, getMyDetails, postQuote } from "../services/api";
 import {
   UserOutlined,
   CalendarOutlined,
@@ -36,16 +36,26 @@ import Cookies from "js-cookie";
 const { Title, Paragraph, Text } = Typography;
 
 export default function ServiceDetail() {
+  const accessToken = Cookies.get("token");
   const { sku } = useParams();
   const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
   const [openCards, setOpenCards] = useState(true);
-  const userDetails = queryClient.getQueryData(["myDetails"]);
+  let getuser = queryClient.getQueryData(["myDetails"]);
+  const { data:user } = useQuery({
+      queryKey: ["myDetails"],
+      queryFn: async () => {
+        const response = await getMyDetails(accessToken);
+        return response.data;
+      },
+      enabled: !!accessToken&&!getuser,
+      refetchOnWindowFocus: false,
+    });
+   const userDetails=getuser?getuser:user;
   const [email, setEmail] = useState(userDetails?.email || null);
   const [phoneNo, setPhoneNo] = useState(userDetails?.phoneNo || "+91");
   const navigate = useNavigate();
   const location = useLocation();
-  const accessToken = Cookies.get("token");
 
   const tagProps = {
     available: { color: "green", text: "Available" },
