@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import PolicyLayout from "../components/PolicyLayout";
 import { getPrivacyPolicy } from "../services/api";
+import { Spin } from "antd";
 
 
 const PrivacyPolicyPage = () => {
@@ -16,7 +17,8 @@ const PrivacyPolicyPage = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        Loading Privacy Policy...
+                <Spin />
+
       </div>
     );
   }

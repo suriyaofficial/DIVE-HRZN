@@ -2,8 +2,7 @@
 import React, { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getAbout } from "../services/api";
-import { QRCode } from "antd";
-import logo from "../divehrzn.svg";
+import { QRCode, Spin } from "antd";
 // --- Icons & small components (same as your current file) ---
 const GlobeIcon = (props) => (
   <svg
@@ -165,7 +164,8 @@ const AboutPage = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-500">Loading about page…</div>
+                <Spin />
+
       </div>
     );
   }
@@ -274,8 +274,8 @@ const AboutPage = () => {
               <div className="p-4 bg-white rounded-lg shadow-inner">
                 <QRCode
                   errorLevel="H"
-                  value="https://ant.design/"
-                  icon={logo}
+                  value={about?.support?.qr_url}
+                  icon={"https://cdn.jsdelivr.net/gh/suriyaofficial/DIVE_HRZN_ASSETS/companyLogo/companyLogo.png"}
                 />
               </div>
             )}

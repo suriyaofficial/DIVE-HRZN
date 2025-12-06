@@ -39,7 +39,6 @@ import {
   loginWithGoogle,
   updatePhoneNumber,
 } from "../services/api";
-import divehrznLogo from "../divehrzn.svg";
 
 const { useBreakpoint } = Grid;
 
@@ -326,29 +325,13 @@ const Navbar = () => {
                 gap: 10,
               }}
             >
-              <div
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 12,
-                  overflow: "hidden",
-                  border: "1px solid #f0f0f0",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  background: "#fff",
-                }}
-              >
-                <img
-                  src={divehrznLogo}
-                  alt="logo"
-                  style={{
-                    width: "80%",
-                    height: "80%",
-                    objectFit: "contain",
-                  }}
-                />
-              </div>
+              <Avatar
+                shape="square"
+                src={
+                  "https://cdn.jsdelivr.net/gh/suriyaofficial/DIVE_HRZN_ASSETS/companyLogo/companyLogo.png"
+                }
+                alt="logo"
+              />
               <div
                 style={{
                   display: "flex",
@@ -520,8 +503,10 @@ const Navbar = () => {
               gap: 8,
             }}
           >
-            <img
-              src={divehrznLogo}
+            <Avatar
+              src={
+                "https://cdn.jsdelivr.net/gh/suriyaofficial/DIVE_HRZN_ASSETS/companyLogo/companyLogo.png"
+              }
               alt="logo"
               style={{ width: 28, height: 28, borderRadius: 8 }}
             />

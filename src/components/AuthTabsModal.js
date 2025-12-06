@@ -1,6 +1,5 @@
 import { Modal, Button, Avatar } from "antd";
 import { GoogleOutlined } from "@ant-design/icons";
-import divehrznlogo from "../divehrzn.svg";
 const AuthTabsModal = ({ visible, onClose, loading, handleGoogleSignIn }) => {
   const modalWidth = 360;
 
@@ -26,7 +25,7 @@ const AuthTabsModal = ({ visible, onClose, loading, handleGoogleSignIn }) => {
       <div
         style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}
       >
-      <Avatar size={100} src={divehrznlogo} />
+      <Avatar size={100} src={"https://cdn.jsdelivr.net/gh/suriyaofficial/DIVE_HRZN_ASSETS/companyLogo/companyLogo.png"} />
       </div>
       <div
         style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}

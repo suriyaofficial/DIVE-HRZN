@@ -1,6 +1,6 @@
 import { Avatar } from "antd";
 import React from "react";
-import divehrznlogo from "../divehrzn.svg"
+
 const PolicyLayout = ({
   title,
   updatedAt,
@@ -30,12 +30,8 @@ const PolicyLayout = ({
           <div className="flex items-center justify-between gap-4">
             {/* Logo on left */}
             {logoUrl ? (
-            //   <img
-            //     src={logoUrl}
-            //     alt={companyName || "Company Logo"}
-            //     className="h-10 md:h-12 object-contain"
-            //   />
-            <Avatar size={100} src={divehrznlogo} />
+              
+              <Avatar size={100} src={logoUrl} />
             ) : (
               <div className="h-10 md:h-12" />
             )}

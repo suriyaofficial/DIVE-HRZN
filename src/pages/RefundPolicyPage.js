@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import PolicyLayout from "../components/PolicyLayout";
 import { getRefundPolicy } from "../services/api";
+import { Spin } from "antd";
 
 
 
@@ -17,7 +18,7 @@ const RefundPolicyPage = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        Loading Refund Policy...
+        <Spin />
       </div>
     );
   }
