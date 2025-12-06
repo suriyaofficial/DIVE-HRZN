@@ -14,23 +14,41 @@ const PolicyLayout = ({
       {/* A4-style page */}
       <main
         className="
-          relative
-          mx-auto
-          bg-white
-          shadow-lg
-          rounded-md
-          border border-gray-200
-          max-w-[794px]           /* ~A4 width at 96dpi */
-          min-h-[1123px]          /* ~A4 height */
-          px-5 py-6 md:px-10 md:py-8
-        "
+    relative
+    z-10
+    mx-auto
+    bg-white
+    shadow-lg
+    rounded-md
+    border border-gray-200
+    max-w-[794px]
+    min-h-[1123px]
+    px-5 py-6 md:px-10 md:py-8
+  "
       >
+        {companyName && (
+          <div
+            className="pointer-events-none select-none absolute inset-0 flex items-center justify-center"
+            style={{ zIndex: 0 }}
+          >
+            <span
+              className="opacity-10 text-gray-900 font-bold tracking-widest"
+              style={{
+                fontSize: "80px",
+                transform: "rotate(-30deg)",
+                whiteSpace: "nowrap",
+                userSelect: "none",
+              }}
+            >
+              {companyName}
+            </span>
+          </div>
+        )}
         {/* Header with logo + company name */}
         <header className="mb-6 border-b border-gray-200 pb-4">
           <div className="flex items-center justify-between gap-4">
             {/* Logo on left */}
             {logoUrl ? (
-              
               <Avatar size={100} src={logoUrl} />
             ) : (
               <div className="h-10 md:h-12" />
